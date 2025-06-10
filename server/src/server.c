@@ -21,6 +21,11 @@ void create_server(server_t *server)
     server->addr.sin_family = AF_INET;
     server->addr.sin_addr.s_addr = htonl(INADDR_ANY);
     server->game_started = false;
+    server->pfds[0].fd = server->fd;
+    for (int i = 1; i < NB_CONNECTION; i++) {
+        server->pfds[i].fd = FD_NULL;
+        server->pfds[i].events = POLLIN;
+    }
     bind(server->fd, (struct sockaddr*) &server->addr, sizeof(server->addr));
     listen(server->fd, NB_CONNECTION);
     return;
@@ -28,7 +33,7 @@ void create_server(server_t *server)
 
 static void add_client(int client_fd, server_t *server)
 {
-    for (int i = 1; i < (NB_CONNECTION + 1); i++) {
+    for (int i = 1; i < NB_CONNECTION + 1; i++) {
         if (server->pfds[i].fd == FD_NULL) {
             server->pfds[i].fd = client_fd;
             server->pfds[i].events = POLLIN;
@@ -36,23 +41,20 @@ static void add_client(int client_fd, server_t *server)
             return;
         }
     }
-    write(client_fd, "Connection with server failed\n", 30);
-    return;
+    close(client_fd);
 }
 
-void handle_client(size_t nb_clients, server_t *server)
+void handle_client(server_t *server)
 {
     struct sockaddr_in c_addr;
     socklen_t addrl = sizeof(c_addr);
-    int client_fd = 0;
+    int client_fd = accept(server->fd, (struct sockaddr*) &c_addr, &addrl);
 
-    if (server->pfds[0].revents & POLLIN) {
-        for (size_t i = 0; i < nb_clients; i++) {
-            client_fd = accept(server->fd, (struct sockaddr*) &c_addr, &addrl);
-            add_client(client_fd, server);
-        }
+    if (client_fd < 0) {
+        perror("Error accept");
+        return;
     }
-    return;
+    add_client(client_fd, server);
 }
 
 void reset_server_clients(server_t *server)
@@ -69,19 +71,67 @@ void reset_server_clients(server_t *server)
     }
 }
 
+static int read_client_data(server_t *server, int i, char *buffer,
+    size_t buffer_size)
+{
+    int read_size = 0;
+
+    if (server->pfds[i].fd == FD_NULL) {
+        fprintf(stderr, "Invalid Reading %d\n", server->pfds[i].fd);
+        return -1;
+    }
+    read_size = read(server->pfds[i].fd, buffer, buffer_size - 1);
+    if (read_size <= 0) {
+        perror("Error in reading");
+        close(server->pfds[i].fd);
+        server->pfds[i].fd = FD_NULL;
+        return -1;
+    }
+    buffer[read_size] = '\0';
+    printf("Message de fd %d : %s", server->pfds[i].fd, buffer);
+    return read_size;
+}
+
+static void handle_client_message(server_t *server, int i, const char *buffer)
+{
+    if (strncmp(buffer, "GRAPHIC", 7) == 0) {
+        write(server->pfds[i].fd, "WELCOME\n", 8);
+    } else if (strncmp(buffer, "TEAM", 4) == 0) {
+        write(server->pfds[i].fd, "WELCOME\n", 8);
+        // TODO : appeler une fonction pour gérer les infos envoyées par l'IA
+    } else {
+        write(server->pfds[i].fd, "ko\n", 3);
+    }
+}
+
+void read_client(server_t *server, int i)
+{
+    char buffer[1024] = {0};
+
+    if (server->pfds[i].revents & POLLIN) {
+        if (read_client_data(server, i, buffer, sizeof(buffer)) > 0) {
+            handle_client_message(server, i, buffer);
+        }
+    }
+}
+
 int launch_server(server_t *server)
 {
     size_t clients_connected = 0;
 
     reset_server_clients(server);
     while (1) {
-        clients_connected = poll(server->pfds, server->nb_clients + 1, 1);
-        if (server->nb_clients < NB_CONNECTION) {
-            handle_client(clients_connected, server);
+        clients_connected = poll(server->pfds, NB_CONNECTION + 1, -1);
+        if (clients_connected < 0) {
+            perror("Erreur poll");
+            continue;
         }
-        // if (server->nb_clients == NB_CONNECTION) {
-        //     read_client(server);
-        // }
+        if (server->pfds[0].revents & POLLIN) {
+            handle_client(server);
+        }
+        for (int i = 1; i < NB_CONNECTION + 1; i++) {
+            read_client(server, i);
+        }
     }
     return SUCCESS;
 }

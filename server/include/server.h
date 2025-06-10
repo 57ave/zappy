@@ -42,7 +42,7 @@ typedef struct {
 } server_config_t;
 
 void create_server(server_t *serv);
-void handle_client(size_t nb_clients, server_t *serv);
+void handle_client(server_t *serv);
 int launch_server(server_t *serv);
 void reset_server_clients(server_t *serv);
 int parse_args(int ac, char **av, server_config_t *config);
