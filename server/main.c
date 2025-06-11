@@ -23,7 +23,7 @@ int main(int ac, char **av)
     }
     server->port = config.port;
     create_server(server);
-    if (launch_server(server))
+    if (launch_server(server, &config))
         return FAILURE;
     return SUCCESS;
 }

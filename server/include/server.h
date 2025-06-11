@@ -15,6 +15,7 @@
     #include <netinet/in.h>
     #include <arpa/inet.h>
     #include "client.h"
+    #include "player.h"
 
     #define NB_CONNECTION 12
     #define FD_NULL -1
@@ -39,12 +40,17 @@ typedef struct {
     int team_nb;
     int nb_clients;
     int freq;
+    team_t *teams;
 } server_config_t;
 
 void create_server(server_t *serv);
 void handle_client(server_t *serv);
-int launch_server(server_t *serv);
+int launch_server(server_t *serv, server_config_t *config);
 void reset_server_clients(server_t *serv);
 int parse_args(int ac, char **av, server_config_t *config);
+int read_client_data(server_t *server, int i, char *buffer,
+    size_t buffer_size);
+void handle_client_message(server_t *server, int i, const char *buffer,
+    server_config_t *config);
 
 #endif /* !SERVER_H_ */
