@@ -47,21 +47,19 @@ void handle_team_command(server_t *server, server_config_t *config,
     int fd = server->pfds[client_index].fd;
     char team_name[256] = {0};
     team_t *team = NULL;
+    int available_slot = 0;
 
     strncpy(team_name, buffer + 5, sizeof(team_name) - 1);
     team_name[strcspn(team_name, "\n")] = '\0';
     team = find_team(team_name, config);
-    if (!team) {
-        write(fd, "ko\n", 3);
-        return;
-    }
-    if (team->actual_players >= team->max_players) {
+    if (!team || team->actual_players >= team->max_players) {
         write(fd, "ko\n", 3);
         return;
     }
     team->actual_players++;
     server->clients[client_index].type = CLIENT_IA;
-    write(fd, "WELCOME\n", 8);
+    available_slot = team->max_players - team->actual_players;
+    dprintf(server->pfds[client_index].fd, "CLIENT %d\n", available_slot);
 }
 
 void handle_client_message(server_t *server, int i, const char *buffer,

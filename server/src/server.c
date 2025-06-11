@@ -38,6 +38,7 @@ static void add_client(int client_fd, server_t *server)
             server->pfds[i].fd = client_fd;
             server->pfds[i].events = POLLIN;
             server->nb_clients += 1;
+            write(client_fd, "WELCOME\n", 8);
             return;
         }
     }
