@@ -49,7 +49,7 @@ void handle_team_command(server_t *server, server_config_t *config,
     team_t *team = NULL;
     int available_slot = 0;
 
-    strncpy(team_name, buffer + 5, sizeof(team_name) - 1);
+    strncpy(team_name, buffer, sizeof(team_name) - 1);
     team_name[strcspn(team_name, "\n")] = '\0';
     team = find_team(team_name, config);
     if (!team || team->actual_players >= team->max_players) {
@@ -59,7 +59,7 @@ void handle_team_command(server_t *server, server_config_t *config,
     team->actual_players++;
     server->clients[client_index].type = CLIENT_IA;
     available_slot = team->max_players - team->actual_players;
-    dprintf(server->pfds[client_index].fd, "CLIENT %d\n", available_slot);
+    dprintf(server->pfds[client_index].fd, "%d\n", available_slot);
 }
 
 void handle_client_message(server_t *server, int i, const char *buffer,
@@ -68,9 +68,7 @@ void handle_client_message(server_t *server, int i, const char *buffer,
     if (strncmp(buffer, "GRAPHIC", 7) == 0) {
         server->clients[i].type = CLIENT_GUI;
         write(server->pfds[i].fd, "WELCOME\n", 8);
-    } else if (strncmp(buffer, "TEAM", 4) == 0) {
-        handle_team_command(server, config, i, buffer);
     } else {
-        write(server->pfds[i].fd, "ko\n", 3);
+        handle_team_command(server, config, i, buffer);
     }
 }
