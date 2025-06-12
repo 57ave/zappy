@@ -16,6 +16,7 @@
     #include <arpa/inet.h>
     #include "client.h"
     #include "player.h"
+    #include "map.h"
 
     #define NB_CONNECTION 12
     #define FD_NULL -1
@@ -28,6 +29,7 @@ typedef struct {
     int nb_clients;
     bool game_started;
     struct sockaddr_in addr;
+    map_t *map;
     struct pollfd pfds[NB_CONNECTION + 1];
     client_t clients[NB_CONNECTION + 1];
 } server_t;
