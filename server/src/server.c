@@ -38,6 +38,7 @@ static void add_client(int client_fd, server_t *server)
             server->pfds[i].fd = client_fd;
             server->pfds[i].events = POLLIN;
             server->nb_clients += 1;
+            write(client_fd, "WELCOME\n", 8);
             return;
         }
     }
@@ -71,53 +72,20 @@ void reset_server_clients(server_t *server)
     }
 }
 
-static int read_client_data(server_t *server, int i, char *buffer,
-    size_t buffer_size)
-{
-    int read_size = 0;
-
-    if (server->pfds[i].fd == FD_NULL) {
-        fprintf(stderr, "Invalid Reading %d\n", server->pfds[i].fd);
-        return -1;
-    }
-    read_size = read(server->pfds[i].fd, buffer, buffer_size - 1);
-    if (read_size <= 0) {
-        perror("Error in reading");
-        close(server->pfds[i].fd);
-        server->pfds[i].fd = FD_NULL;
-        return -1;
-    }
-    buffer[read_size] = '\0';
-    printf("Message de fd %d : %s", server->pfds[i].fd, buffer);
-    return read_size;
-}
-
-static void handle_client_message(server_t *server, int i, const char *buffer)
-{
-    if (strncmp(buffer, "GRAPHIC", 7) == 0) {
-        write(server->pfds[i].fd, "WELCOME\n", 8);
-    } else if (strncmp(buffer, "TEAM", 4) == 0) {
-        write(server->pfds[i].fd, "WELCOME\n", 8);
-        // TODO : appeler une fonction pour gérer les infos envoyées par l'IA
-    } else {
-        write(server->pfds[i].fd, "ko\n", 3);
-    }
-}
-
-void read_client(server_t *server, int i)
+void read_client(server_t *server, server_config_t *config, int i)
 {
     char buffer[1024] = {0};
 
     if (server->pfds[i].revents & POLLIN) {
         if (read_client_data(server, i, buffer, sizeof(buffer)) > 0) {
-            handle_client_message(server, i, buffer);
+            handle_client_message(server, i, buffer, config);
         }
     }
 }
 
-int launch_server(server_t *server)
+int launch_server(server_t *server, server_config_t *config)
 {
-    size_t clients_connected = 0;
+    int clients_connected = 0;
 
     reset_server_clients(server);
     while (1) {
@@ -130,7 +98,7 @@ int launch_server(server_t *server)
             handle_client(server);
         }
         for (int i = 1; i < NB_CONNECTION + 1; i++) {
-            read_client(server, i);
+            read_client(server, config, i);
         }
     }
     return SUCCESS;

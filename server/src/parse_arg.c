@@ -59,14 +59,23 @@ int parse_begin(int ac, char **av, server_config_t *config, int i)
     return i;
 }
 
+static void init_teams(int ac, char **av, server_config_t *config, int i)
+{
+    if (strcmp(av[i], "-n") == 0) {
+            config->team_name = parse_teams(i, ac, av, &config->team_nb);
+            config->teams = malloc(sizeof(team_t) * config->team_nb);
+            for (int j = 0; j < config->team_nb; j++) {
+                config->teams[j].name = strdup(config->team_name[j]);
+                config->teams[j].max_players = config->nb_clients;
+                config->teams[j].actual_players = 0;
+            }
+        }
+}
+
 int parse_args(int ac, char **av, server_config_t *config)
 {
     for (int i = 1; i < ac; i++) {
         i = parse_begin(ac, av, config, i);
-        if (strcmp(av[i], "-n") == 0) {
-            config->team_name = parse_teams(i, ac, av, &config->team_nb);
-            i += config->team_nb;
-        }
         if (strcmp(av[i], "-c") == 0) {
             config->nb_clients = parse_world_size(i, ac, av);
             i++;
@@ -75,6 +84,9 @@ int parse_args(int ac, char **av, server_config_t *config)
             config->freq = parse_world_size(i, ac, av);
             i++;
         }
+    }
+    for (int i = 1; i < ac; i++) {
+        init_teams(ac, av, config, i);
     }
     return 0;
 }
