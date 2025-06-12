@@ -8,6 +8,7 @@
 #ifndef CLIENT_H_
     #define CLIENT_H_
     #define BUF_SIZE 1024
+    #include "player.h"
 
 typedef enum {
     CLIENT_IA,
@@ -19,6 +20,7 @@ typedef struct {
     char read_buf[BUF_SIZE];
     int read_len;
     client_type_t type;
+    player_t *player;
 } client_t;
 
 #endif /* !CLIENT_H_ */

@@ -41,13 +41,34 @@ team_t *find_team(const char *name, server_config_t *config)
     return NULL;
 }
 
+static void register_player(server_t *server, int client_index,
+    team_t *team, const char *team_name)
+{
+    int fd = server->pfds[client_index].fd;
+    int available_slot = 0;
+    player_t *player = create_player(server->player_nb, fd, team_name,
+        server->map);
+
+    if (!player) {
+        write(fd, "ko\n", 3);
+        return;
+    }
+    server->players[server->player_nb] = player;
+    server->player_nb++;
+    server->clients[client_index].type = CLIENT_IA;
+    server->clients[client_index].player = player;
+    team->actual_players++;
+    available_slot = team->max_players - team->actual_players;
+    dprintf(fd, "%d\n", available_slot);
+    dprintf(fd, "%d %d\n", server->map->width, server->map->height);
+}
+
 void handle_team_command(server_t *server, server_config_t *config,
     int client_index, const char *buffer)
 {
     int fd = server->pfds[client_index].fd;
     char team_name[256] = {0};
     team_t *team = NULL;
-    int available_slot = 0;
 
     strncpy(team_name, buffer, sizeof(team_name) - 1);
     team_name[strcspn(team_name, "\n")] = '\0';
@@ -56,10 +77,7 @@ void handle_team_command(server_t *server, server_config_t *config,
         write(fd, "ko\n", 3);
         return;
     }
-    team->actual_players++;
-    server->clients[client_index].type = CLIENT_IA;
-    available_slot = team->max_players - team->actual_players;
-    dprintf(server->pfds[client_index].fd, "%d\n", available_slot);
+    register_player(server, client_index, team, team_name);
 }
 
 void handle_client_message(server_t *server, int i, const char *buffer,
