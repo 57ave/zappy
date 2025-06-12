@@ -19,6 +19,7 @@
     #include "map.h"
 
     #define NB_CONNECTION 12
+    #define MAX_PLAYERS 130
     #define FD_NULL -1
     #define SUCCESS 0
     #define FAILURE 84
@@ -30,6 +31,8 @@ typedef struct {
     bool game_started;
     struct sockaddr_in addr;
     map_t *map;
+    player_t *players[MAX_PLAYERS];
+    int player_nb;
     struct pollfd pfds[NB_CONNECTION + 1];
     client_t clients[NB_CONNECTION + 1];
 } server_t;
