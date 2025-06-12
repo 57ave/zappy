@@ -26,7 +26,7 @@ int main(int ac, char **av)
     server->map = malloc(sizeof(map_t));
     init_map(server->map, config.width, config.height);
     generate_resources(server->map);
-    if (launch_server(server))
+    if (launch_server(server, &config))
         return FAILURE;
     free_map(server->map);
     free(server);

@@ -6,6 +6,7 @@
 ##
 
 SRC	=	src/server.c    \
+		src/handle_client.c	\
     	main.c	\
 		src/parse_arg.c	\
 		src/map.c	\
