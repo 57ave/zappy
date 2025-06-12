@@ -7,6 +7,7 @@
 
 #ifndef PLAYER_H_
     #define PLAYER_H_
+    #include "map.h"
 
 typedef struct {
     char *name;
@@ -39,5 +40,7 @@ typedef struct player_s {
     int life_remain;
     char *team;
 } player_t;
+
+player_t *create_player(int id, int fd, const char *team, map_t *map);
 
 #endif /* !PLAYER_H_ */
