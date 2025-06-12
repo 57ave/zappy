@@ -23,7 +23,12 @@ int main(int ac, char **av)
     }
     server->port = config.port;
     create_server(server);
+    server->map = malloc(sizeof(map_t));
+    init_map(server->map, config.width, config.height);
+    generate_resources(server->map);
     if (launch_server(server))
         return FAILURE;
+    free_map(server->map);
+    free(server);
     return SUCCESS;
 }
