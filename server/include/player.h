@@ -25,6 +25,7 @@ typedef enum {
 
 typedef struct action_s {
     char *command;
+    int remaining_ticks;
     struct action_s *next;
 } action_t;
 
