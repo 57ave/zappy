@@ -17,9 +17,11 @@ CC	=	g++
 
 CFLAGS	=	-Wall -Wextra 
 
+SFMLFLAGS =	-lsfml-graphics -lsfml-window -lsfml-system
+
 all:	$(NAME)
 $(NAME):	$(OBJ)
-	$(CC) $(CFLAGS) -o $(NAME) $(OBJ)
+	$(CC) $(CFLAGS) -o $(NAME) $(OBJ) $(SFMLFLAGS)
 
 clean:
 	rm -f $(OBJ)
