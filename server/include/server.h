@@ -57,5 +57,6 @@ int read_client_data(server_t *server, int i, char *buffer,
     size_t buffer_size);
 void handle_client_message(server_t *server, int i, const char *buffer,
     server_config_t *config);
+void send_data_gui(server_t *server, int gui_fd, server_config_t *config);
 
 #endif /* !SERVER_H_ */

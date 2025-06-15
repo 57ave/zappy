@@ -6,6 +6,7 @@
 */
 #include "map.h"
 #include "server.h"
+#include "stdio.h"
 
 void send_map_size_to_gui(int gui_fd, map_t *map)
 {

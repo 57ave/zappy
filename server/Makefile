@@ -11,6 +11,7 @@ SRC	=	src/server.c    \
 		src/parse_arg.c	\
 		src/map.c	\
 		src/player.c	\
+		src/send_data_gui.c	\
 
 OBJ	=	$(SRC:.c=.o)
 
