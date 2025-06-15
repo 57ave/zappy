@@ -51,3 +51,18 @@ void send_players_to_gui(int gui_fd, server_t *server)
             player->inventory[THYSTAME]);
     }
 }
+
+void send_teams_to_gui(int gui_fd, server_config_t *config)
+{
+    for (int i = 0; i < config->team_nb; i++) {
+        dprintf(gui_fd, "tna %s\n", config->teams[i].name);
+    }
+}
+
+void send_data_gui(server_t *server, int gui_fd, server_config_t *config)
+{
+    send_map_size_to_gui(gui_fd, server->map);
+    send_map_content_to_gui(gui_fd, server->map);
+    send_players_to_gui(gui_fd, server);
+    send_teams_to_gui(gui_fd, config);
+}
