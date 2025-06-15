@@ -14,9 +14,11 @@ void send_map_size_to_gui(int gui_fd, map_t *map)
 
 void send_map_content_to_gui(int gui_fd, map_t *map)
 {
+    tile_t tile;
+
     for (int y = 0; y < map->height; y++) {
         for (int x = 0; x < map->width; x++) {
-            tile_t tile = map->tiles[y][x];
+            tile = map->tiles[y][x];
             dprintf(gui_fd, "bct %d %d %d %d %d %d %d %d %d\n",
                 x, y,
                 tile.resources[FOOD],
@@ -27,5 +29,25 @@ void send_map_content_to_gui(int gui_fd, map_t *map)
                 tile.resources[PHIRAS],
                 tile.resources[THYSTAME]);
         }
+    }
+}
+
+void send_players_to_gui(int gui_fd, server_t *server)
+{
+    player_t *player = NULL;
+
+    for (int i = 0; i < server->player_nb; i++) {
+        player = server->players[i];
+        dprintf(gui_fd, "pnw %d %d %d %d %d %s\n", player->id, player->x,
+            player->y, player->direction + 1, player->lvl, player->team);
+        dprintf(gui_fd, "pin %d %d %d %d %d %d %d %d %d %d\n",
+            player->id, player->x, player->y,
+            player->inventory[FOOD],
+            player->inventory[LINEMATE],
+            player->inventory[DERAUMERE],
+            player->inventory[SIBUR],
+            player->inventory[MENDIANE],
+            player->inventory[PHIRAS],
+            player->inventory[THYSTAME]);
     }
 }
