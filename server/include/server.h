@@ -45,6 +45,7 @@ typedef struct {
     int team_nb;
     int nb_clients;
     int freq;
+    int tick_freq;
     team_t *teams;
 } server_config_t;
 
@@ -58,5 +59,6 @@ int read_client_data(server_t *server, int i, char *buffer,
 void handle_client_message(server_t *server, int i, const char *buffer,
     server_config_t *config);
 void send_data_gui(server_t *server, int gui_fd, server_config_t *config);
+void update_player_life(server_t *server);
 
 #endif /* !SERVER_H_ */

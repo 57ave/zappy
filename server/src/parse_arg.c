@@ -82,6 +82,7 @@ int parse_args(int ac, char **av, server_config_t *config)
         }
         if (strcmp(av[i], "-f") == 0) {
             config->freq = parse_world_size(i, ac, av);
+            config->tick_freq = 1000000 / config->freq;
             i++;
         }
     }
