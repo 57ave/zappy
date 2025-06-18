@@ -1,8 +1,12 @@
 mod client;
 mod commands;
+mod error;
+mod drone;
 
 use clap::Parser;
 use tokio::time::{sleep, Duration};
+use error::ClientError;
+use drone::food_provider::food_provider;
 
 #[derive(Parser)]
 #[command(name = "zappy_ai")]
@@ -23,8 +27,11 @@ struct Args {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), ClientError> {
     let args = Args::parse();
-    let client = client::ZappyClient::connect(&args.machine, args.port, &args.name, 100, args.debug).await?;
+    let mut client = 
+    client::ZappyClient::connect(&args.machine, args.port, &args.name, 100, args.debug).await?;
+
+    food_provider(&mut client, args.debug).await?;
     Ok(())
 }
