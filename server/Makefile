@@ -11,6 +11,7 @@ SRC	=	src/server.c    \
 		src/parse_arg.c	\
 		src/map.c	\
 		src/player.c	\
+		src/commands.c	\
 
 OBJ	=	$(SRC:.c=.o)
 
