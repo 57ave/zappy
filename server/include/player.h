@@ -39,6 +39,7 @@ typedef struct player_s {
     action_t *action_queue;
     int inventory[RESOURCE_COUNT];
     int life_remain;
+    int food_tick;
     char *team;
 } player_t;
 
