@@ -1,43 +1,111 @@
-
+/*
+** EPITECH PROJECT, 2025
+** handle client
+** File description:
+** handle_client
+*/
 #include "server.h"
-#include "actions.h"
+#include "commands.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 
-void handle_client_message(server_t *server, int i, const char *buffer, server_config_t *config)
+int read_client_data(server_t *server, int i, char *buffer,
+    size_t buffer_size)
 {
-    if (server->clients[i].type == CLIENT_GUI) {
-        write(server->pfds[i].fd, "WELCOME\n", 8);
-    } else if (server->clients[i].type == CLIENT_IA &&
-               server->clients[i].player != NULL) {
-        player_t *player = server->clients[i].player;
-        int freq = config->freq;
+    int read_size = 0;
 
-        if (strncmp(buffer, "Forward", 7) == 0)
-            add_action_to_queue(player, "Forward", 7 / freq);
-        else if (strncmp(buffer, "Right", 5) == 0)
-            add_action_to_queue(player, "Right", 7 / freq);
-        else if (strncmp(buffer, "Left", 4) == 0)
-            add_action_to_queue(player, "Left", 7 / freq);
-        else if (strncmp(buffer, "Look", 4) == 0)
-            add_action_to_queue(player, "Look", 7 / freq);
-        else if (strncmp(buffer, "Inventory", 9) == 0)
-            add_action_to_queue(player, "Inventory", 1 / freq);
-        else if (strncmp(buffer, "Take ", 5) == 0)
-            add_action_to_queue(player, buffer, 7 / freq);
-        else if (strncmp(buffer, "Set ", 4) == 0)
-            add_action_to_queue(player, buffer, 7 / freq);
-        else if (strncmp(buffer, "Connect_nbr", 11) == 0)
-            add_action_to_queue(player, "Connect_nbr", 0);
-        else if (strncmp(buffer, "Fork", 4) == 0)
-            add_action_to_queue(player, "Fork", 42 / freq);
-        else if (strncmp(buffer, "Eject", 5) == 0)
-            add_action_to_queue(player, "Eject", 7 / freq);
-        else
-            write(server->pfds[i].fd, "ko\n", 3);
-    } else {
-        handle_team_command(server, config, i, buffer);
+    if (server->pfds[i].fd == FD_NULL) {
+        fprintf(stderr, "Invalid Reading %d\n", server->pfds[i].fd);
+        return -1;
+    }
+    read_size = read(server->pfds[i].fd, buffer, buffer_size - 1);
+    if (read_size <= 0) {
+        perror("Error in reading");
+        close(server->pfds[i].fd);
+        server->pfds[i].fd = FD_NULL;
+        return -1;
+    }
+    buffer[read_size] = '\0';
+    printf("Message de fd %d : %s", server->pfds[i].fd, buffer);
+    return read_size;
+}
+
+team_t *find_team(const char *name, server_config_t *config)
+{
+    for (int i = 0; i < config->team_nb; i++) {
+        if (strcmp(config->teams[i].name, name) == 0)
+            return &config->teams[i];
+    }
+    return NULL;
+}
+
+static void register_player(server_t *server, int client_index,
+    team_t *team, const char *team_name)
+{
+    int fd = server->pfds[client_index].fd;
+    int available_slot = 0;
+    player_t *player = create_player(server->player_nb, fd, team_name,
+        server->map);
+
+    if (!player) {
+        write(fd, "ko\n", 3);
+        return;
+    }
+    server->players[server->player_nb] = player;
+    server->player_nb++;
+    server->clients[client_index].type = CLIENT_IA;
+    server->clients[client_index].player = player;
+    team->actual_players++;
+    available_slot = team->max_players - team->actual_players;
+    dprintf(fd, "%d\n", available_slot);
+    dprintf(fd, "%d %d\n", server->map->width, server->map->height);
+}
+
+void handle_team_command(server_t *server, server_config_t *config,
+    int client_index, const char *buffer)
+{
+    int fd = server->pfds[client_index].fd;
+    char team_name[256] = {0};
+    team_t *team = NULL;
+
+    strncpy(team_name, buffer, sizeof(team_name) - 1);
+    team_name[strcspn(team_name, "\n")] = '\0';
+    team = find_team(team_name, config);
+    if (!team || team->actual_players >= team->max_players) {
+        write(fd, "ko\n", 3);
+        return;
+    }
+    register_player(server, client_index, team, team_name);
+}
+
+void handle_client_message(server_t *server, int i, const char *buffer,
+    server_config_t *config)
+{
+    // Si le client n'est pas encore identifié
+    if (server->clients[i].type != CLIENT_IA && server->clients[i].type != CLIENT_GUI) {
+        if (strncmp(buffer, "GRAPHIC", 7) == 0) {
+            server->clients[i].type = CLIENT_GUI;
+            write(server->pfds[i].fd, "WELCOME\n", 8);
+        } else {
+            handle_team_command(server, config, i, buffer);
+        }
+        return;
+    }
+    
+    // Si c'est un client IA, traiter les commandes
+    if (server->clients[i].type == CLIENT_IA && server->clients[i].player) {
+        char command_copy[1024];
+        strncpy(command_copy, buffer, sizeof(command_copy) - 1);
+        command_copy[sizeof(command_copy) - 1] = '\0';
+        execute_command(server, server->clients[i].player, command_copy);
+    }
+    
+    // Si c'est un client GUI, traiter les commandes GUI (à implémenter)
+    if (server->clients[i].type == CLIENT_GUI) {
+        // Traitement des commandes GUI à implémenter plus tard
+        printf("GUI command received: %s", buffer);
     }
 }
