@@ -23,8 +23,6 @@ int gui::run() {
             if (event.type == sf::Event::Closed)
                 window.close();
         }
-        handle_server_data();
-        parse_server_data(buffer);
         window.clear(sf::Color::White);
         window.display();
     }
@@ -49,6 +47,7 @@ void gui::handle_server_data() {
     } else if (valread < 0) {
         std::cerr << "Error reading from server" << std::endl;
     }
+    parse_server_data(buffer);
 }
 
 void gui::parse_server_data(const std::string &data) {
