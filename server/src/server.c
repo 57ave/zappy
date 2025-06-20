@@ -38,6 +38,9 @@ static void add_client(int client_fd, server_t *server)
         if (server->pfds[i].fd == FD_NULL) {
             server->pfds[i].fd = client_fd;
             server->pfds[i].events = POLLIN;
+            server->clients[i].fd = client_fd;
+            server->clients[i].type = -1;
+            server->clients[i].player = NULL;
             server->nb_clients += 1;
             write(client_fd, "WELCOME\n", 8);
             return;
@@ -66,10 +69,12 @@ void reset_server_clients(server_t *server)
     for (int i = 1; i < (NB_CONNECTION + 1); i++) {
         server->pfds[i].fd = FD_NULL;
         server->pfds[i].events = POLLIN;
-        server->pfds[i].revents = -1;
+        server->pfds[i].revents = 0;
     }
     for (int i = 1; i < NB_CONNECTION + 1; i++) {
         server->clients[i].fd = FD_NULL;
+        server->clients[i].type = -1;
+        server->clients[i].player = NULL;
     }
 }
 
@@ -120,11 +125,26 @@ static int wait_activity(server_t *server, int timeout_ms)
     return poll(server->pfds, NB_CONNECTION + 1, timeout_ms);
 }
 
+static void handle_game_tick(server_t *server, server_config_t *config,
+    struct timeval *last_tick, int *tick_count)
+{
+    if (!handle_tick(last_tick, config))
+        return;
+    update_player_life(server);
+    (*tick_count)++;
+    if (*tick_count >= 20) {
+        generate_resources(server->map);
+        send_gui_resource_changes(server);
+        *tick_count = 0;
+    }
+}
+
 int launch_server(server_t *server, server_config_t *config)
 {
     int clients_connected = 0;
     struct timeval last_tick = {0};
     int timeout_ms = config->tick_freq / 1000;
+    int tick_count = 0;
 
     reset_server_clients(server);
     gettimeofday(&last_tick, NULL);
@@ -135,9 +155,7 @@ int launch_server(server_t *server, server_config_t *config)
             continue;
         }
         process_clients(server, config, clients_connected);
-        if (handle_tick(&last_tick, config)) {
-            update_player_life(server);
-        }
+        handle_game_tick(server, config, &last_tick, &tick_count);
     }
     return SUCCESS;
 }

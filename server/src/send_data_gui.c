@@ -53,7 +53,7 @@ void send_players_to_gui(int gui_fd, server_t *server)
     }
 }
 
-void send_teams_to_gui(int gui_fd, server_config_t *config)
+static void send_teams_to_gui(int gui_fd, server_config_t *config)
 {
     for (int i = 0; i < config->team_nb; i++) {
         dprintf(gui_fd, "tna %s\n", config->teams[i].name);
@@ -66,4 +66,44 @@ void send_data_gui(server_t *server, int gui_fd, server_config_t *config)
     send_map_content_to_gui(gui_fd, server->map);
     send_players_to_gui(gui_fd, server);
     send_teams_to_gui(gui_fd, config);
+}
+
+static void send_tile_to_gui(server_t *server, int x, int y, tile_t *tile)
+{
+    for (int i = 1; i < NB_CONNECTION + 1; i++) {
+        if (server->pfds[i].fd == FD_NULL ||
+                server->clients[i].type != CLIENT_GUI)
+            continue;
+        dprintf(server->pfds[i].fd, "bct %d %d %d %d %d %d %d %d %d\n", x, y,
+            tile->resources[FOOD],
+            tile->resources[LINEMATE],
+            tile->resources[DERAUMERE],
+            tile->resources[SIBUR],
+            tile->resources[MENDIANE],
+            tile->resources[PHIRAS],
+            tile->resources[THYSTAME]);
+    }
+}
+
+void send_gui_resource_changes(server_t *server)
+{
+    map_t *map = server->map;
+    tile_t *tile = NULL;
+
+    for (int y = 0; y < map->height; y++) {
+        for (int x = 0; x < map->width; x++) {
+            tile = &map->tiles[y][x];
+            printf("Tile changed at (%d, %d): [%d %d %d %d %d %d %d]\n",
+                x, y,
+                tile->resources[FOOD],
+                tile->resources[LINEMATE],
+                tile->resources[DERAUMERE],
+                tile->resources[SIBUR],
+                tile->resources[MENDIANE],
+                tile->resources[PHIRAS],
+                tile->resources[THYSTAME]);
+            send_tile_to_gui(server, x, y, tile);
+            tile->changed = false;
+        }
+    }
 }

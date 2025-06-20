@@ -60,5 +60,6 @@ void handle_client_message(server_t *server, int i, const char *buffer,
     server_config_t *config);
 void send_data_gui(server_t *server, int gui_fd, server_config_t *config);
 void update_player_life(server_t *server);
+void send_gui_resource_changes(server_t *server);
 
 #endif /* !SERVER_H_ */
