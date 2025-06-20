@@ -13,15 +13,25 @@
 #include <SFML/System.hpp>
 #include <iostream>
 #include <string>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+
+#include "../include/pars_args.hpp"
 
 class gui {
     private:
-          
+        int sock;
+        sockaddr_in serv_addr{};
+        char buffer[1024] = {0};
     public:
         gui();
         ~gui();
 
-        int run_sfml();
+        int connect_to_server(args_t *args);
+        int run();
+        void handle_server_data();
+        void parse_server_data(const std::string &data);
 };
 
 #endif // GUI_HPP_

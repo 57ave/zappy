@@ -17,6 +17,13 @@ int main(int argc, char**argv) {
         return 84;
     }
     pars_args(argc, argv, &args);
-    zappy_gui.run_sfml();
+    if (zappy_gui.connect_to_server(&args) != 0) {
+        std::cerr << "Erreur de connexion\n";
+        return 84;
+    }
+    if (zappy_gui.run() != 0) {
+        std::cerr << "Erreur lors de l'exécution du GUI\n";
+        return 84;
+    }
     return 0;
 }
