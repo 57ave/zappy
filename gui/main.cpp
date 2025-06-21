@@ -21,9 +21,6 @@ int main(int argc, char**argv) {
         std::cerr << "Erreur de connexion\n";
         return 84;
     }
-    while (1) {
-        zappy_gui.handle_server_data();
-    }
     if (zappy_gui.run() != 0) {
         std::cerr << "Erreur lors de l'exécution du GUI\n";
         return 84;
