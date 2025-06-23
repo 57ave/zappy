@@ -58,6 +58,7 @@ void generate_resources(map_t *map)
             x = rand() % map->width;
             y = rand() % map->height;
             map->tiles[y][x].resources[type]++;
+            map->tiles[y][x].changed = true;
         }
     }
 }

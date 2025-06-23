@@ -25,6 +25,7 @@ typedef enum {
 
 typedef struct action_s {
     char *command;
+    int remaining_ticks;
     struct action_s *next;
 } action_t;
 
@@ -38,6 +39,7 @@ typedef struct player_s {
     action_t *action_queue;
     int inventory[RESOURCE_COUNT];
     int life_remain;
+    int food_tick;
     char *team;
 } player_t;
 
