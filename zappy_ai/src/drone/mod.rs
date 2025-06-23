@@ -1,1 +1,2 @@
-pub mod food_provider;
+pub mod providers;
+pub mod inventory;

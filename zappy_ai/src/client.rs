@@ -1,11 +1,13 @@
 use tokio::net::TcpStream;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
-use std::io;
 use std::time::Duration;
-use crate::commands::commands::{Command, Resource, Direction};
+use crate::commands::commands::Command;
+use crate::drone::inventory::{Inventory, Resource};
 use crate::error::ClientError;
+use tokio::time::sleep;
 
+#[derive(Debug)]
 pub struct ZappyClient {
     reader: BufReader<OwnedReadHalf>,
     writer: BufWriter<OwnedWriteHalf>,
@@ -15,6 +17,7 @@ pub struct ZappyClient {
     map_height: usize,
     freq: u32,
     debug: bool,
+    pub last_look: Option<Vec<String>>,
 }
 
 impl ZappyClient {
@@ -73,7 +76,6 @@ impl ZappyClient {
         if debug {
             println!("Connected successfully. Map size: {}x{}", map_width, map_height);
         }
-        
         Ok(ZappyClient {
             reader,
             writer,
@@ -83,6 +85,7 @@ impl ZappyClient {
             map_height,
             freq,
             debug,
+            last_look: None,
         })
     }
     
@@ -145,27 +148,12 @@ impl ZappyClient {
         Ok(tiles)
     }
     
-    pub async fn inventory(&mut self) -> Result<Vec<(Resource, i32)>, ClientError> {
+    pub async fn inventory(&mut self) -> Result<Inventory, ClientError> {
         if self.debug {
             println!("Executing Inventory command");
         }
         let response = self.execute_command(Command::Inventory).await?;
-        let inventory: Vec<(Resource, i32)> = response
-            .trim_matches(|c| c == '[' || c == ']')
-            .split(',')
-            .filter_map(|s| {
-                let parts: Vec<&str> = s.trim().split_whitespace().collect();
-                if parts.len() == 2 {
-                    if let (Some(resource), Ok(amount)) = (Resource::from_string(parts[0]), parts[1].parse()) {
-                        Some((resource, amount))
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                }
-            })
-            .collect();
+        let inventory = Inventory::from_response(&response)?;
         if self.debug {
             println!("Inventory result: {:?}", inventory);
         }
@@ -247,4 +235,81 @@ impl ZappyClient {
     pub fn get_freq(&self) -> u32 {
         self.freq
     }
+
+    pub async fn get_look_cached(&mut self) -> Result<&Vec<String>, ClientError> {
+        if self.last_look.is_none() {
+            let look = self.look().await?;
+            self.last_look = Some(look);
+        }
+        Ok(self.last_look.as_ref().unwrap())
+    }
+
+    pub fn reset_look_cache(&mut self) {
+        self.last_look = None;
+    }
+
+    pub async fn wait(&mut self) -> Result<(), ClientError> {
+        sleep(Duration::from_millis(100)).await;
+        Ok(())
+    }
+
+
+pub async fn see_food(&mut self) -> Result<u32, ClientError> {
+    let tiles = self.get_look_cached().await?;
+    Ok(tiles
+        .iter()
+        .filter(|tile| tile.contains("food"))
+        .count() as u32)
+}
+
+pub async fn move_to_food(&mut self) -> Result<(), ClientError> {
+    let tiles = self.get_look_cached().await?;
+    if let Some((idx, _)) = tiles.iter().enumerate().find(|(_, t)| t.contains("food")) {
+        if idx == 0 {
+            self.take(Resource::Food).await?;
+        } else {
+            self.forward().await?;
+        }
+    } else {
+        self.forward().await?;
+    }
+    Ok(())
+}
+
+pub async fn see_priority_resource(&mut self) -> Result<bool, ClientError> {
+    let tiles = self.get_look_cached().await?;
+    for tile in tiles {
+        if tile.contains("linemate") || tile.contains("deraumere") || tile.contains("sibur") || tile.contains("phiras") {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
+pub async fn move_to_resource(&mut self) -> Result<(), ClientError> {
+    let tiles = self.get_look_cached().await?;
+    if let Some((idx, tile)) = tiles.iter().enumerate().find(|(_, t)| t.contains("linemate") || t.contains("deraumere") || t.contains("sibur") || t.contains("phiras")) {
+        if idx == 0 {
+            if tile.contains("linemate") {
+                self.take(Resource::Linemate).await?;
+            } else if tile.contains("deraumere") {
+                self.take(Resource::Deraumere).await?;
+            } else if tile.contains("sibur") {
+                self.take(Resource::Sibur).await?;
+            } else if tile.contains("phiras") {
+                self.take(Resource::Phiras).await?;
+            }
+        } else {
+            self.forward().await?;
+        }
+    } else {
+        self.forward().await?;
+    }
+    Ok(())
+}
+
+pub async fn has_level_requirements(&mut self) -> Result<bool, ClientError> {
+    let inv = self.inventory().await?;
+    Ok(inv.linemate >= 1)
+}
 }

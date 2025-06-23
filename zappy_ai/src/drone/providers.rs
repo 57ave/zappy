@@ -1,23 +1,18 @@
 use crate::client::ZappyClient;
 use crate::error::ClientError;
-use crate::commands::Resource;
 use tokio::time::{sleep, Duration};
 
-pub async fn food_provider(client: &mut ZappyClient, debug: bool) -> Result<(), ClientError> {
-    loop {              
-        let tiles = client.look().await?;
+pub async fn move_to_food(client: &mut ZappyClient, debug: bool) -> Result<(), ClientError> {
+    loop {
+        let tiles = client.get_look_cached().await?;
+      
         if debug {
             println!("Vision actuelle: {:?}", tiles);
         }
 
-        let inventory = client.inventory().await?;
-        if debug {
-            println!("Inventaire actuel: {:?}", inventory);
-        }
-
         if let Some(first_tile) = tiles.first() {
             if first_tile.contains("food") {
-                client.take(Resource::Food).await?;
+                client.take(super::inventory::Resource::Food).await?;
             } else {
                 client.forward().await?;
             }
