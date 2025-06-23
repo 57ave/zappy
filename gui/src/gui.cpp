@@ -7,6 +7,8 @@
 
 #include "../include/gui.hpp"
 
+static bool welcome_received = false;
+
 gui::gui() {
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
@@ -44,15 +46,35 @@ int gui::connect_to_server(args_t *args) {
 }
 
 void gui::handle_server_data() {
-    int valread = read(sock, buffer, sizeof(buffer) - 1);
-    if (valread > 0) {
-        buffer[valread] = '\0';
-        parse_server_data(buffer);
+    ssize_t bytes_read = read(sock, buffer, sizeof(buffer) - 1);
+    if (bytes_read > 0) {
+        buffer[bytes_read] = '\0';
+        recv_buffer += buffer;
+        size_t pos;
+        while ((pos = recv_buffer.find('\n')) != std::string::npos) {
+            std::string message = recv_buffer.substr(0, pos);
+            message_queue.push(message);
+            recv_buffer.erase(0, pos + 1);
+        }
+    }
+}
+
+void gui::process_server_messages()
+{
+    while (!message_queue.empty()) {
+        std::string message = message_queue.front();
+        message_queue.pop();
+        if (!welcome_received) {
+            if (message == "WELCOME") {
+                welcome_received = true;
+            }
+        }
+        parse_server_data(message.c_str());
     }
 }
 
 void gui::parse_server_data(const std::string &data) {
-    std::cout << "Server data: " << data << std::endl;
+    std::cout << data << std::endl;
 }
 
 int gui::run() {
@@ -65,6 +87,9 @@ int gui::run() {
                 window.close();
         }
         handle_server_data();
+        process_server_messages();
+        if (welcome_received == false)
+            window.close();
         if (menu == true) {
             window.clear(sf::Color::Yellow);
             drawMenu(&window);
