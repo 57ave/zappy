@@ -20,6 +20,8 @@
 #include <queue>
 
 #include "../include/pars_args.hpp"
+#include "../include/Map.hpp"
+#include "../include/Tile.hpp"
 
 class gui {
     private:
@@ -35,12 +37,14 @@ class gui {
         sf::Font font;
         float isoOffsetX = 0.0f;
         float isoOffsetY = 0.0f;
+        Map map;
+        Tile tile;
 
         void handle_server_data();
         void process_server_messages();
         void parse_server_data(const std::string &data);
         void drawMenu(sf::RenderWindow *window);
-        void drawIsometricMap(sf::RenderWindow *window, int mapWidth, int mapHeight);
+        void drawIsometricMap(sf::RenderWindow *window);
         void drawTopBar(sf::RenderWindow *window);
         void drawPlayers();
         void drawEggs();

@@ -8,6 +8,10 @@
 SRC	=	main.cpp			\
 		src/gui.cpp			\
 		src/pars_args.cpp	\
+		src/pars_server.cpp	\
+		src/Map.cpp			\
+		src/Tile.cpp		\
+
 
 NAME	=	zappy_gui
 

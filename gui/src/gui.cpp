@@ -73,10 +73,6 @@ void gui::process_server_messages()
     }
 }
 
-void gui::parse_server_data(const std::string &data) {
-    std::cout << data << std::endl;
-}
-
 int gui::run() {
     sf::RenderWindow window(sf::VideoMode(1920, 1080), "Zappy");
     window.setFramerateLimit(60);
@@ -96,7 +92,7 @@ int gui::run() {
             window.display();
         } else {
             window.clear(sf::Color::Yellow);
-            drawIsometricMap(&window, 10, 10);
+            drawIsometricMap(&window);
             drawTopBar(&window);
             window.display();
         }
@@ -134,7 +130,7 @@ void gui::drawMenu(sf::RenderWindow *window) {
     window->draw(instructions);
 }
 
-void gui::drawIsometricMap(sf::RenderWindow *window, int mapWidth, int mapHeight) {
+void gui::drawIsometricMap(sf::RenderWindow *window) {
     float moveSpeed = 20.0f;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
         isoOffsetY -= moveSpeed;
@@ -149,8 +145,8 @@ void gui::drawIsometricMap(sf::RenderWindow *window, int mapWidth, int mapHeight
     float originX = window->getSize().x / 2.0f + isoOffsetX;
     float originY = 100.0f + isoOffsetY;
 
-    for (int y = 0; y < mapHeight; ++y) {
-        for (int x = 0; x < mapWidth; ++x) {
+    for (int y = 0; y < map.getHeight(); ++y) {
+        for (int x = 0; x < map.getWidth(); ++x) {
             float isoX = (x - y) * (tileWidth / 2.0f);
             float isoY = (x + y) * (tileHeight / 2.0f);
 
