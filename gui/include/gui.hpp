@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <queue>
 
 #include "../include/pars_args.hpp"
 
@@ -24,7 +25,9 @@ class gui {
     private:
         int sock;
         sockaddr_in serv_addr{};
-        char buffer[1024] = {0};
+        char buffer[1024];
+        std::string recv_buffer;
+        std::queue<std::string> message_queue;
         int windowSizeX;
         int windowSizeY;
         bool menu = true;
@@ -34,6 +37,7 @@ class gui {
         float isoOffsetY = 0.0f;
 
         void handle_server_data();
+        void process_server_messages();
         void parse_server_data(const std::string &data);
         void drawMenu(sf::RenderWindow *window);
         void drawIsometricMap(sf::RenderWindow *window, int mapWidth, int mapHeight);
