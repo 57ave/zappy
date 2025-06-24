@@ -1,0 +1,151 @@
+          📝Documentation Utilisateur
+                Projet Zappy
+
+
+
+            Sommaire :
+
+               🧠      1. Présentation du projet
+
+               🎯      2. Objectif du projet
+
+               🌍      3. Le monde de Trantor
+
+               🍗      4. Survie
+
+               💫      5. L’élévation
+
+               👀      6. Vison et Exploration
+
+               💻      7. Commandes de base
+
+               📺      8. Interface Graphique (GUI)
+
+               🚀      9. Comment Démarrer le jeu
+
+
+Erwan | Gustave | Zoltan | Aymen                     1/5
+
+
+📝Documentation Utilisateur                          Projet Zappy
+
+
+Bienvenue dans la documentation utilisateur du projet zappy
+
+🧠 Présentation du projet :
+    Zappy est un jeu multijoueur en réseau, inspiré de l’univers de
+    la science-fiction. Il plonge les joueurs dans un monde en 2D
+    nommé Trantor, où plusieurs équipes s’affrontent pour
+    atteindre l’élévation suprême, symbole de puissance et de
+    sagesse dans ce monde pacifique.
+
+🎯 Objectif du projet :
+    Chaque joueur incarne un Trantorien, un être curieux et non-
+    violent, qui évolue sur une carte contenant différentes
+    ressources. Le but est de faire progresser son équipe : la
+    première équipe à faire atteindre le niveau 8 à au moins 6 de
+    ses membres remporte la partie.
+
+🌍 Le Monde de Trantor :
+    Le monde est une carte en 2D sans relief, il est toroïdal : sortez
+    d’un côté et vous réapparaîtrez de l’autre côté.
+    De nombreuses ressources naturelles apparaissent au fil du
+    temps :
+       - De la nourriture pour survivre
+       - Des minéraux : linemate, deraumere, sibur, mendiane, phiras, thystame
+    Ces ressources sont fondamentales pour survivre et s’élever
+    dans la hiérarchie.
+
+
+Erwan | Gustave | Zoltan | Aymen                              2/5
+
+
+📝Documentation Utilisateur                       Projet Zappy
+
+🍗 Survie :
+    Chaque joueur démarre avec 10 unités de vie, une unité de
+    nourriture permet de survivre 126 unités de temps.
+    Si vous ne trouvez pas à manger à temps, la partie s’arrête là
+    pour vous et vous mourrez.
+
+💫 L’élévation :
+    Pour atteindre un niveau supérieur, un joueur doit réaliser un
+    rituel d’incantation avec :
+        - D’autres joueurs du même niveau
+        - Des pierres spécifiques selon le niveau
+    Un exemple, passons du niveau 2 au niveau 3. Les conditions
+    pour pouvoir s’élever :
+        - 2 joueurs de niveau 2
+        - 1 linemate, 1 deraumere, 1 sibur
+
+👀 Vision et Exploration :
+    Chaque joueur peut se déplacer sur la carte.
+    Il peut observer autour de lui grâce à la commande Look, il
+    pourra repérer des ressources ou des autres joueurs.
+    Le joueur peut collecter ou déposer des objets sur la carte.
+    Il peut également émettre des messages sonores perçus par les
+    autres joueurs.
+    Plus votre joueur s’élève et monte en niveau plus sa vision
+    s’élargit
+
+Erwan | Gustave | Zoltan | Aymen                          3/5
+
+
+📝Documentation Utilisateur                                                  Projet Zappy
+
+💻 Commandes de base :
+ 🎮   Action                       💻   Commande               📝   Description  
+
+ ---------------------------       ------------------------   ----------------------------------
+ Avancer                           Forward                    Avance d’une case
+
+ Tourner à droite                  Right                      Tourne 90° vers la droite
+
+ Tourner à gauche                  Left                       Tourne 90° vers la gauche
+
+ Regarder                          Look                       Donne la vue autour du joueur
+
+ Inventaire                        Inventory                  Affiche les objets portés et la nourriture
+
+ Ramasser un objet                 Take <objet>               Ramasse un objet au sol
+
+ Poser un objet                    Set <objet>                Dépose un objet
+
+ Émettre un message                Broadcast <message>        Envoie un message sonore aux autres joueurs
+
+ Lancer un fork                    Fork                       Génère un nouvel œuf pour un futur joueur
+
+ Commencer l’élévation             Incantation                Lance un rituel pour changer de niveau
+
+
+
+Erwan | Gustave | Zoltan | Aymen                                                               4/5
+
+📝Documentation Utilisateur                           Projet Zappy
+
+
+📺 Interface Graphique (GUI) :
+    Une interface visuelle permet de suivre l’évolution du monde en
+    direct :
+        - Affichage de la carte en 2D
+        - Positions des joueurs, ressources, œufs
+        - Evénements comme les incantation, naissance, message
+
+🚀 Comment démarrer le jeu :
+    Pour lancer le serveur :
+        - cd server
+        - make
+        - ./zappy_server -p port -x width -y height -n team1 team2... -c
+            clientsNb -f freq
+    Pour lancer le joueur IA :
+        - cd zappy_ai
+        - make
+        - cd target
+        - cd debug
+        - ./zappy_ai -p port -n name -m machine
+    Pour lancer l’interface graphique :
+        - cd gui
+        - make
+        - ./zappy_gui -p port -h machine
+
+Erwan | Gustave | Zoltan | Aymen                                5/5
