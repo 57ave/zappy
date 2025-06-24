@@ -12,6 +12,16 @@ SRC	=	src/server.c    \
 		src/map.c	\
 		src/player.c	\
 		src/commands.c	\
+		src/action.c	\
+		src/calculate.c	\
+		src/count.c	\
+		src/create.c	\
+		src/dynamic.c	\
+		src/eject.c	\
+		src/find.c	\
+		src/inventory.c	\
+		src/look.c	\
+		src/tile.c	\
 
 OBJ	=	$(SRC:.c=.o)
 
