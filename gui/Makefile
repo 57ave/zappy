@@ -11,6 +11,7 @@ SRC	=	main.cpp			\
 		src/pars_server.cpp	\
 		src/Map.cpp			\
 		src/Tile.cpp		\
+		src/Player.cpp		\
 
 
 NAME	=	zappy_gui
