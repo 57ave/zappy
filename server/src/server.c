@@ -6,6 +6,7 @@
 */
 
 #include "server.h"
+#include "commands.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -22,8 +23,10 @@ void create_server(server_t *server)
     server->addr.sin_family = AF_INET;
     server->addr.sin_addr.s_addr = htonl(INADDR_ANY);
     server->game_started = false;
+    server->player_nb = 0;
     server->pfds[0].fd = server->fd;
-    for (int i = 1; i < NB_CONNECTION; i++) {
+    server->pfds[0].events = POLLIN;
+    for (int i = 1; i < NB_CONNECTION + 1; i++) {
         server->pfds[i].fd = FD_NULL;
         server->pfds[i].events = POLLIN;
     }
@@ -42,6 +45,9 @@ static void add_client(int client_fd, server_t *server)
             server->clients[i].type = -1;
             server->clients[i].player = NULL;
             server->nb_clients += 1;
+            server->clients[i].fd = client_fd;
+            server->clients[i].type = -1; // Non identifié
+            server->clients[i].player = NULL;
             write(client_fd, "WELCOME\n", 8);
             return;
         }
@@ -142,6 +148,7 @@ static void handle_game_tick(server_t *server, server_config_t *config,
 int launch_server(server_t *server, server_config_t *config)
 {
     int clients_connected = 0;
+
     struct timeval last_tick = {0};
     int timeout_ms = config->tick_freq / 1000;
     int tick_count = 0;

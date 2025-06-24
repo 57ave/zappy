@@ -41,18 +41,68 @@ void add_action_to_queue(player_t *player, const char *cmd, int time)
     action_t *new = malloc(sizeof(action_t));
     action_t *tmp = NULL;
 
+    if (!new) {
+        return;
+    }
+    
     new->command = strdup(cmd);
     new->remaining_ticks = time;
     new->next = NULL;
+    
     if (!player->action_queue) {
         player->action_queue = new;
         return;
     }
+    
     tmp = player->action_queue;
     while (tmp->next) {
         tmp = tmp->next;
     }
     tmp->next = new;
+}
+
+void remove_completed_action(player_t *player)
+{
+    if (!player->action_queue) {
+        return;
+    }
+    
+    action_t *completed = player->action_queue;
+    player->action_queue = completed->next;
+    
+    free(completed->command);
+    free(completed);
+}
+
+int get_queue_size(player_t *player)
+{
+    int size = 0;
+    action_t *current = player->action_queue;
+    
+    while (current) {
+        size++;
+        current = current->next;
+    }
+    
+    return size;
+}
+
+void clear_action_queue(player_t *player)
+{
+    while (player->action_queue) {
+        remove_completed_action(player);
+    }
+}
+
+void free_player(player_t *player)
+{
+    if (!player) {
+        return;
+    }
+    
+    clear_action_queue(player);
+    free(player->team);
+    free(player);
 }
 
 void update_player_actions(server_t *server)
@@ -62,10 +112,13 @@ void update_player_actions(server_t *server)
 
     for (int i = 0; i < server->player_nb; i++) {
         player = server->players[i];
+        if (!player) continue;
+        
         action = player->action_queue;
         if (!action) {
             continue;
         }
+        
         action->remaining_ticks--;
         if (action->remaining_ticks <= 0) {
             printf("Action prête : %s player %d\n",
