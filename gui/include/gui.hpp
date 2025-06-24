@@ -42,6 +42,8 @@ class gui {
 
         void handle_server_data();
         void process_server_messages();
+        void parse_msz(const std::string &message);
+        void parse_bct(const std::string &message);
         void parse_server_data(const std::string &data);
         void drawMenu(sf::RenderWindow *window);
         void drawIsometricMap(sf::RenderWindow *window);
