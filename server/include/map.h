@@ -7,6 +7,8 @@
 
 #ifndef MAP_H_
     #define MAP_H_
+    #include <stdbool.h>
+
 typedef enum {
     FOOD,
     LINEMATE,
@@ -21,6 +23,7 @@ typedef enum {
 
 typedef struct {
     int resources[RESOURCE_COUNT];
+    bool changed;
 } tile_t;
 
 typedef struct {

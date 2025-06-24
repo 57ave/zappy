@@ -84,14 +84,12 @@ void handle_team_command(server_t *server, server_config_t *config,
 void handle_client_message(server_t *server, int i, const char *buffer,
     server_config_t *config)
 {
-    if (server->clients[i].type != CLIENT_IA && server->clients[i].type != CLIENT_GUI) {
-        if (strncmp(buffer, "GRAPHIC", 7) == 0) {
-            server->clients[i].type = CLIENT_GUI;
-            write(server->pfds[i].fd, "WELCOME\n", 8);
-        } else {
-            handle_team_command(server, config, i, buffer);
-        }
-        return;
+     if (strncmp(buffer, "GRAPHIC", 7) == 0) {
+        server->clients[i].type = CLIENT_GUI;
+        write(server->pfds[i].fd, "WELCOME\n", 8);
+        send_data_gui(server, server->pfds[i].fd, config);
+    } else {
+        handle_team_command(server, config, i, buffer);
     }
     
     if (server->clients[i].type == CLIENT_IA && server->clients[i].player) {

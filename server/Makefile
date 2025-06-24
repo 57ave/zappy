@@ -22,6 +22,7 @@ SRC	=	src/server.c    \
 		src/inventory.c	\
 		src/look.c	\
 		src/tile.c	\
+    src/send_data_gui.c	\
 
 OBJ	=	$(SRC:.c=.o)
 
