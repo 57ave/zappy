@@ -22,6 +22,7 @@
 #include "../include/pars_args.hpp"
 #include "../include/Map.hpp"
 #include "../include/Tile.hpp"
+#include "../include/Player.hpp"
 
 class gui {
     private:
@@ -39,11 +40,14 @@ class gui {
         float isoOffsetY = 0.0f;
         Map map;
         Tile tile;
+        std::vector<Player> players;
 
         void handle_server_data();
         void process_server_messages();
         void parse_msz(const std::string &message);
         void parse_bct(const std::string &message);
+        void parse_tna(const std::string &message);
+        void parse_pnw(const std::string &message);
         void parse_server_data(const std::string &data);
         void drawMenu(sf::RenderWindow *window);
         void drawIsometricMap(sf::RenderWindow *window);
