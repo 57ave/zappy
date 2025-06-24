@@ -84,7 +84,6 @@ void handle_team_command(server_t *server, server_config_t *config,
 void handle_client_message(server_t *server, int i, const char *buffer,
     server_config_t *config)
 {
-    // Si le client n'est pas encore identifié
     if (server->clients[i].type != CLIENT_IA && server->clients[i].type != CLIENT_GUI) {
         if (strncmp(buffer, "GRAPHIC", 7) == 0) {
             server->clients[i].type = CLIENT_GUI;
@@ -95,7 +94,6 @@ void handle_client_message(server_t *server, int i, const char *buffer,
         return;
     }
     
-    // Si c'est un client IA, traiter les commandes
     if (server->clients[i].type == CLIENT_IA && server->clients[i].player) {
         char command_copy[1024];
         strncpy(command_copy, buffer, sizeof(command_copy) - 1);
@@ -103,9 +101,7 @@ void handle_client_message(server_t *server, int i, const char *buffer,
         execute_command(server, server->clients[i].player, command_copy);
     }
     
-    // Si c'est un client GUI, traiter les commandes GUI (à implémenter)
     if (server->clients[i].type == CLIENT_GUI) {
-        // Traitement des commandes GUI à implémenter plus tard
         printf("GUI command received: %s", buffer);
     }
 }
