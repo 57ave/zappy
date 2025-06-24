@@ -38,6 +38,7 @@ class gui {
         sf::Font font;
         float isoOffsetX = 0.0f;
         float isoOffsetY = 0.0f;
+        float zoom = 1.0f;
         Map map;
         Tile tile;
         std::vector<Player> players;
@@ -50,9 +51,9 @@ class gui {
         void parse_pnw(const std::string &message);
         void parse_server_data(const std::string &data);
         void drawMenu(sf::RenderWindow *window);
-        void drawIsometricMap(sf::RenderWindow *window);
+        void drawMap(sf::RenderWindow *window);
         void drawTopBar(sf::RenderWindow *window);
-        void drawPlayers();
+        void drawPlayers(sf::RenderWindow *window);
         void drawEggs();
 
     public:
