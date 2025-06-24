@@ -17,8 +17,7 @@ typedef enum {
     MENDIANE,
     PHIRAS,
     THYSTAME,
-    RESOURCE_COUNT,
-    RESOURCE_INVALID = -1
+    RESOURCE_COUNT
 } resource_type_t;
 
 typedef struct {
