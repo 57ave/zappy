@@ -86,6 +86,10 @@ int gui::run() {
         process_server_messages();
         if (welcome_received == false)
             window.close();
+        if (gameClock.getElapsedTime().asSeconds() >= 1.0f) {
+            timeGame++;
+            gameClock.restart();
+        }
         if (menu == true) {
             window.clear(sf::Color(150, 220, 255));
             drawMenu(&window);
@@ -180,6 +184,17 @@ void gui::drawTopBar(sf::RenderWindow *window) {
     title.setFillColor(sf::Color::Black);
     title.setPosition(10, 15);
     window->draw(title);
+
+    sf::Text timerText(" ", font, 30);
+    int minutes = timeGame / 60;
+    if (timeGame <= 60) {
+        timerText.setString("Timer: " + std::to_string(timeGame) + "s");
+    } else {
+        timerText.setString("Timer: " + std::to_string(minutes) + "m " + std::to_string(timeGame % 60) + "s");
+    }
+    timerText.setFillColor(sf::Color::Black);
+    timerText.setPosition(window->getSize().x - 250, 15);
+    window->draw(timerText);
 
     if (teams.empty()) {
         return;

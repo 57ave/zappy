@@ -102,6 +102,22 @@ void gui::parse_pin(const std::string &message) {
     }
 }
 
+void gui::parse_sgt(const std::string &message) {
+    std::istringstream iss(message);
+    std::string sgt;
+    int time;
+    iss >> sgt >> time;
+    timeGame = time;
+}
+
+void gui::parse_sst(const std::string &message) {
+    std::istringstream iss(message);
+    std::string sgt;
+    int time;
+    iss >> sgt >> time;
+    timeGame = time;
+}
+
 void gui::parse_server_data(const std::string &message) {
     std::string type = message.substr(0, 3);
 
@@ -112,7 +128,9 @@ void gui::parse_server_data(const std::string &message) {
         {"pnw", &gui::parse_pnw},
         {"ppo", &gui::parse_ppo},
         {"plv", &gui::parse_plv},
-        {"pin", &gui::parse_pin}
+        {"pin", &gui::parse_pin},
+        {"sgt", &gui::parse_sgt},
+        {"sst", &gui::parse_sst}
     };
 
     auto it = cmd.find(type);
