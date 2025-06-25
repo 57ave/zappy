@@ -12,8 +12,7 @@
 
 class Player {
     public:
-        Player(const std::string &team);
-        void setId(int id);
+        Player(int id, const std::string &team);
         void setPosition(int x, int y, int dir);
         void setLevel(int lvl);
         void setInventory(const std::array<int, 7> &inventory);

@@ -41,6 +41,7 @@ class gui {
         float zoom = 1.0f;
         Map map;
         Tile tile;
+        std::vector<std::string> teams;
         std::vector<Player> players;
 
         void handle_server_data();

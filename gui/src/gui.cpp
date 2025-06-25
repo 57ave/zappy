@@ -95,11 +95,6 @@ int gui::run() {
             drawMap(&window);
             drawResources(&window);
             drawPlayers(&window);
-            // draw player tester
-            //if (!players.empty()) {
-            //    players.at(0).setPosition(0, 0, 2);
-            //}
-            //
             drawTopBar(&window);
             window.display();
         }
@@ -123,18 +118,15 @@ void gui::drawMenu(sf::RenderWindow *window) {
     subtitle.setFillColor(sf::Color::White);
     subtitle.setPosition(window->getSize().x / 2.0f - subtitle.getGlobalBounds().width / 2.0f, 230);
 
-    sf::Text controls("Use Z, Q, S, D to move the map and + - to zoom", font, 30);
+    sf::Text controls("Use Z, Q, S, D to move the map and + - to zoom\n", font, 30);
     controls.setFillColor(sf::Color::White);
-    controls.setPosition(window->getSize().x / 2.0f - controls.getGlobalBounds().width / 2.0f, 500);
-
-    sf::Text instructions("Press 'Enter' to switch to the map view", font, 30);
-    instructions.setFillColor(sf::Color::White);
-    instructions.setPosition(window->getSize().x / 2.0f - instructions.getGlobalBounds().width / 2.0f, 550);
-
+    controls.setPosition(window->getSize().x / 2.0f - subtitle.getGlobalBounds().width / 2.0f, 500);
+    controls.setString(controls.getString() + "Hold press left button mouse on team name to show all players team information\n\n\n" +
+        "Press 'Enter' to switch to the map view");
+    
     window->draw(title);
     window->draw(subtitle);
     window->draw(controls);
-    window->draw(instructions);
 }
 
 void gui::drawMap(sf::RenderWindow *window) {
@@ -188,12 +180,41 @@ void gui::drawTopBar(sf::RenderWindow *window) {
     title.setFillColor(sf::Color::Black);
     title.setPosition(10, 15);
     window->draw(title);
-    
-    for (size_t i = 0; i < players.size(); ++i) {
-        sf::Text playerText(players[i].getTeam(), font, 30);
-        playerText.setFillColor(sf::Color(((i+1) * 100) % 255, ((i+1) * 50) % 255, ((i+1) * 150) % 255));
-        playerText.setPosition(110 * (i+1), 15);
-        window->draw(playerText);
+
+    if (teams.empty()) {
+        return;
+    }
+    for (size_t i = 0; i < teams.size(); ++i) {
+        sf::Text teamText(teams[i], font, 30);
+        teamText.setFillColor(sf::Color(((i+1) * 100) % 255, ((i+1) * 50) % 255, ((i+1) * 150) % 255));
+        teamText.setPosition(110 * (i+1), 15);
+        window->draw(teamText);
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            sf::Vector2i mousePos = sf::Mouse::getPosition(*window);
+            if (teamText.getGlobalBounds().contains(static_cast<sf::Vector2f>(mousePos))) {
+                sf::RectangleShape moreInfoBox(sf::Vector2f(350, 1000));
+                moreInfoBox.setFillColor(sf::Color(200, 200, 200, 200));
+                moreInfoBox.setPosition(20, 82);
+                window->draw(moreInfoBox);
+                for (const auto& player : players) {
+                    if (player.getTeam() == teams[i]) {
+                        sf::Text playerInfo("Id: " + std::to_string(player.getId()) +
+                           " Lvl: " + std::to_string(player.getLevel()) +
+                           " Loc: x = " + std::to_string(player.getX()) +
+                           ", y = " + std::to_string(player.getY()) + "\n" , font, 20);
+                        const auto& inv = player.getInventory();
+                        std::string invStr = "Inv: food(" + std::to_string(inv[0]) + ") linemate(" + std::to_string(inv[1]) +
+                            ") deraumere(" + std::to_string(inv[2]) + ")\nsibur(" + std::to_string(inv[3]) +
+                            ") mendiane(" + std::to_string(inv[4]) + ") phiras(" + std::to_string(inv[5]) +
+                            ") thystame(" + std::to_string(inv[6]) + ")";
+                        playerInfo.setFillColor(sf::Color::Black);
+                        playerInfo.setPosition(25, 90 + 100 * (&player - &players[0]));
+                        playerInfo.setString(playerInfo.getString() + invStr);
+                        window->draw(playerInfo);
+                    }
+                }
+            }
+        }
     }
 }
 
