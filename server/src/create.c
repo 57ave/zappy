@@ -23,13 +23,14 @@ char *create_resource_info(int resource_index, int quantity)
 
 bool add_single_resource(tile_t *tile, char *tile_content, bool *first_item, int r)
 {
+    char *resource_info;
     if (tile->resources[r] <= 0)
         return true;
     
     if (!*first_item)
         strcat(tile_content, " ");
     
-    char *resource_info = create_resource_info(r, tile->resources[r]);
+    resource_info = create_resource_info(r, tile->resources[r]);
     if (!resource_info)
         return false;
     
@@ -61,13 +62,15 @@ char *create_player_info(int player_count)
 
 void add_players_to_tile_content(int player_count, char *tile_content, bool *first_item)
 {
+    char *player_info;
+
     if (player_count <= 0)
         return;
     
     if (!*first_item)
         strcat(tile_content, " ");
     
-    char *player_info = create_player_info(player_count);
+    player_info = create_player_info(player_count);
     if (!player_info)
         return;
     

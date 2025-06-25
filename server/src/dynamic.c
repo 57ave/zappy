@@ -54,10 +54,12 @@ void add_item_to_response(char *response, const char *item, bool first)
 
 bool process_single_item(player_t *player, int i, char *response, bool *first)
 {
+    char *item;
+
     if (player->inventory[i] <= 0)
         return true;
     
-    char *item = format_inventory_item(i, player->inventory[i]);
+    item = format_inventory_item(i, player->inventory[i]);
     if (!item)
         return false;
     

@@ -56,12 +56,13 @@ bool add_tile_players(tile_context_t *tile_ctx, response_context_t *resp_ctx)
 bool add_tile_resources(tile_context_t *tile_ctx, response_context_t *resp_ctx)
 {
     tile_t *tile = &tile_ctx->server->map->tiles[tile_ctx->pos.y][tile_ctx->pos.x];
-    
+    char *element;
+
     for (int r = 0; r < RESOURCE_COUNT; r++) {
         if (tile->resources[r] <= 0)
             continue;
         
-        char *element = create_element_string(get_resource_name(r), tile->resources[r]);
+        element = create_element_string(get_resource_name(r), tile->resources[r]);
         if (!element)
             return false;
         
