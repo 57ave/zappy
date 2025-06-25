@@ -1,5 +1,6 @@
                   📝 Documentation Développeur
-                        Projet Zappy
+                    Projet Zappy by EPITECH
+                        Juin 2025
 
                 Sommaire :
 
