@@ -59,6 +59,7 @@ class gui {
         void drawMap(sf::RenderWindow *window);
         void drawTopBar(sf::RenderWindow *window);
         void drawPlayers(sf::RenderWindow *window);
+        void drawResources(sf::RenderWindow *window);
         void drawEggs();
 
     public:
