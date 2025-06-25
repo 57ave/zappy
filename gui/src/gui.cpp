@@ -87,17 +87,18 @@ int gui::run() {
         if (welcome_received == false)
             window.close();
         if (menu == true) {
-            window.clear(sf::Color(140, 75, 0));
+            window.clear(sf::Color(150, 220, 255));
             drawMenu(&window);
             window.display();
         } else {
-            window.clear(sf::Color(140, 75, 0));
+            window.clear(sf::Color(150, 220, 255));
             drawMap(&window);
+            drawResources(&window);
             drawPlayers(&window);
             // draw player tester
-            if (!players.empty()) {
-                players.at(0).setPosition(std::rand() % 10, std::rand() % 10, std::rand() % 5);
-            }
+            //if (!players.empty()) {
+            //    players.at(0).setPosition(0, 0, 2);
+            //}
             //
             drawTopBar(&window);
             window.display();
@@ -147,11 +148,11 @@ void gui::drawMap(sf::RenderWindow *window) {
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
         isoOffsetX += moveSpeed;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Add)) {
-        zoom += 0.1;
+        zoom += 0.05;
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Subtract)) {
         if (zoom > 0.2f)
-            zoom -= 0.1;
+            zoom -= 0.05;
     }
     float tileWidth = 64.0f * zoom;
     float tileHeight = 64.0f * zoom;
@@ -235,5 +236,66 @@ void gui::drawPlayers(sf::RenderWindow *window) {
 
         sprite.setPosition(posX, posY);
         window->draw(sprite);
+    }
+}
+
+void gui::drawResources(sf::RenderWindow *window) {
+    static sf::Texture ResourcesTexture;
+    static bool textureLoaded = false;
+    if (!textureLoaded) {
+        if (!ResourcesTexture.loadFromFile("assets/materials.png")) {
+            std::cerr << "Erreur de chargement des ressources" << std::endl;
+            return;
+        }
+        textureLoaded = true;
+    }
+    sf::IntRect spriteRects[7] = {
+        {5 * 16, 2 * 16, 16, 16}, //food
+        {1 * 16, 1 * 16, 16, 16}, //linemate
+        {2 * 16, 2 * 16, 16, 16}, //deraumere
+        {4 * 16, 2 * 16, 16, 16}, //sibur
+        {5 * 16, 0 * 16, 16, 16}, //mendiane
+        {5 * 16, 1 * 16, 16, 16}, //phiras
+        {6 * 16, 2 * 16, 16, 16}  //thystame
+    };
+
+    float offsets[7][2] = {
+        {0.5f, 0.1f},
+        {0.85f, 0.15f},
+        {0.9f, 0.5f},
+        {0.85f, 0.85f},
+        {0.5f, 0.9f},
+        {0.15f, 0.85f},
+        {0.1f, 0.5f}
+    };
+
+    float tileWidth = 64.0f * zoom;
+    float tileHeight = 64.0f * zoom;
+    float mapWidthPx = map.getWidth() * tileWidth;
+    float mapHeightPx = map.getHeight() * tileHeight;
+    float originX = (window->getSize().x - mapWidthPx) / 2.0f + isoOffsetX;
+    float originY = (window->getSize().y - mapHeightPx) / 2.0f + isoOffsetY;
+
+    for (int j = 0; j < map.getHeight(); j++) {
+        for (int i = 0; i < map.getWidth(); i++) {
+            Tile &tile = map.at(i, j);
+            const auto& resources = tile.getResources();
+            if (resources.empty())
+                continue;
+            int resCount = std::min((int)resources.size(), 7);
+            for (int r = 0; r < resCount; ++r) {
+                if (resources[r] > 0) {
+                    sf::Sprite sprite(ResourcesTexture);
+                    sprite.setTextureRect(spriteRects[r]);
+                    sprite.setScale(tileWidth / 64.0f, tileHeight / 64.0f);
+
+                    float posX = originX + i * tileWidth + offsets[r][0] * tileWidth - 8 * zoom;
+                    float posY = originY + j * tileHeight + offsets[r][1] * tileHeight - 8 * zoom;
+
+                    sprite.setPosition(posX, posY);
+                    window->draw(sprite);
+                }
+            }
+        }
     }
 }
