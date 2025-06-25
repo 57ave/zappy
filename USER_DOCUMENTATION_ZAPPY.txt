@@ -24,11 +24,13 @@
                🚀      9. Comment Démarrer le jeu
 
 
+--------------------------------------------------------
 Erwan | Gustave | Zoltan | Aymen                     1/5
+--------------------------------------------------------
 
-
-📝Documentation Utilisateur                          Projet Zappy
-
+--------------------------------------------------------
+📝Documentation Utilisateur                 Projet Zappy
+--------------------------------------------------------
 
 Bienvenue dans la documentation utilisateur du projet zappy
 
@@ -57,10 +59,13 @@ Bienvenue dans la documentation utilisateur du projet zappy
     dans la hiérarchie.
 
 
-Erwan | Gustave | Zoltan | Aymen                              2/5
+--------------------------------------------------------
+Erwan | Gustave | Zoltan | Aymen                     2/5
+--------------------------------------------------------
 
-
-📝Documentation Utilisateur                       Projet Zappy
+--------------------------------------------------------
+📝Documentation Utilisateur                 Projet Zappy
+--------------------------------------------------------
 
 🍗 Survie :
     Chaque joueur démarre avec 10 unités de vie, une unité de
@@ -88,10 +93,14 @@ Erwan | Gustave | Zoltan | Aymen                              2/5
     Plus votre joueur s’élève et monte en niveau plus sa vision
     s’élargit
 
-Erwan | Gustave | Zoltan | Aymen                          3/5
 
+--------------------------------------------------------
+Erwan | Gustave | Zoltan | Aymen                     3/5
+--------------------------------------------------------
 
-📝Documentation Utilisateur                                                  Projet Zappy
+--------------------------------------------------------
+📝Documentation Utilisateur                 Projet Zappy
+--------------------------------------------------------
 
 💻 Commandes de base :
  🎮   Action                       💻   Commande               📝   Description  
@@ -119,10 +128,13 @@ Erwan | Gustave | Zoltan | Aymen                          3/5
 
 
 
-Erwan | Gustave | Zoltan | Aymen                                                               4/5
+--------------------------------------------------------
+Erwan | Gustave | Zoltan | Aymen                     4/5
+--------------------------------------------------------
 
-📝Documentation Utilisateur                           Projet Zappy
-
+--------------------------------------------------------
+📝Documentation Utilisateur                 Projet Zappy
+--------------------------------------------------------
 
 📺 Interface Graphique (GUI) :
     Une interface visuelle permet de suivre l’évolution du monde en
@@ -148,4 +160,7 @@ Erwan | Gustave | Zoltan | Aymen                                                
         - make
         - ./zappy_gui -p port -h machine
 
-Erwan | Gustave | Zoltan | Aymen                                5/5
+
+--------------------------------------------------------
+Erwan | Gustave | Zoltan | Aymen                     5/5
+--------------------------------------------------------
