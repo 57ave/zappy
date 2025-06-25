@@ -94,6 +94,11 @@ int gui::run() {
             window.clear(sf::Color(140, 75, 0));
             drawMap(&window);
             drawPlayers(&window);
+            // draw player tester
+            if (!players.empty()) {
+                players.at(0).setPosition(std::rand() % 10, std::rand() % 10, std::rand() % 5);
+            }
+            //
             drawTopBar(&window);
             window.display();
         }
@@ -192,5 +197,43 @@ void gui::drawTopBar(sf::RenderWindow *window) {
 }
 
 void gui::drawPlayers(sf::RenderWindow *window) {
-    
+    static sf::Texture playerTexture;
+    if (!playerTexture.loadFromFile("assets/player.png")) {
+        std::cerr << "Erreur de chargement du sprite joueur" << std::endl;
+        return;
+    }
+
+    float tileWidth = 64.0f * zoom;
+    float tileHeight = 64.0f * zoom;
+    float mapWidthPx = map.getWidth() * tileWidth;
+    float mapHeightPx = map.getHeight() * tileHeight;
+    float originX = (window->getSize().x - mapWidthPx) / 2.0f + isoOffsetX;
+    float originY = (window->getSize().y - mapHeightPx) / 2.0f + isoOffsetY;
+
+    for (const auto& player : players) {
+        int x = player.getX();
+        int y = player.getY();
+        int orientation = player.getDirection();
+
+        if (orientation == 0) {
+            continue;
+        }
+        sf::Sprite sprite(playerTexture);
+        if (orientation == 1) {
+            sprite.setTextureRect(sf::IntRect(0 * 32, 12 * 32, 32, 32));
+        } else if (orientation == 2) {
+            sprite.setTextureRect(sf::IntRect(0 * 32, 10 * 32, 32, 32));
+        } else if (orientation == 3) {
+            sprite.setTextureRect(sf::IntRect(0 * 32, 6 * 32, 32, 32));
+        } else if (orientation == 4) {
+            sprite.setTextureRect(sf::IntRect(0 * 32, 8 * 32, 32, 32));
+        }
+        sprite.setScale(tileWidth / 32.0f, tileHeight / 32.0f);
+
+        float posX = originX + x * tileWidth;
+        float posY = originY + y * tileHeight;
+
+        sprite.setPosition(posX, posY);
+        window->draw(sprite);
+    }
 }
