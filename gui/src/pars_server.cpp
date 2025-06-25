@@ -37,7 +37,7 @@ void gui::parse_tna(const std::string &message) {
     std::string team_name;
     iss >> tna >> team_name;
     if (!team_name.empty())
-        players.push_back(Player(team_name));
+        teams.push_back(team_name);
 }
 
 void gui::parse_pnw(const std::string &message) {
@@ -49,12 +49,12 @@ void gui::parse_pnw(const std::string &message) {
     if (team_name.empty()) {
         return;
     }
-    for (int i = 0; i < players.size(); i++) {
-        if (players.at(i).getTeam() == team_name) {
-            players.at(i).setId(id);
-            players.at(i).setPosition(x, y, direction);
-            players.at(i).setLevel(level);
-            break;
+    players.push_back(Player(id, team_name));
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            player.setPosition(x, y, direction);
+            player.setLevel(level);
+            return;
         }
     }
 }
@@ -67,7 +67,7 @@ void gui::parse_ppo(const std::string &message) {
     for (auto &player : players) {
         if (player.getId() == id) {
             player.setPosition(x, y, direction);
-            break;
+            return;
         }
     }
 }
@@ -80,9 +80,10 @@ void gui::parse_plv(const std::string &message) {
     for (auto &player : players) {
         if (player.getId() == id) {
             player.setLevel(level);
-            break;
+            return;
         }
     }
+
 }
 
 void gui::parse_pin(const std::string &message) {
@@ -112,7 +113,6 @@ void gui::parse_server_data(const std::string &message) {
         {"ppo", &gui::parse_ppo},
         {"plv", &gui::parse_plv},
         {"pin", &gui::parse_pin}
-
     };
 
     auto it = cmd.find(type);
