@@ -325,17 +325,18 @@ Erwan | Gustave | Zoltan | Aymen                     7/8
 --------------------------------------------------------
 
 🎮 4. Contrôles
-    - Z, Q, S, D pour déplacer la vue isométrique.
-      - Z : Avancer
+    - Z, Q, S, D pour déplacer la vue du haut.
+      - Z : Aller en haut
       - Q : Aller à droite
-      - S : Reculer
+      - S : Aller en bas
       - D : Aller à gauche
+    - Le + et le - pour zoomer sur la carte.
     - Entrée pour passer du menu à la vue carte.
 
 
 🌍 5. Rendu de la carte
-    - Calcul des positions isométriques des tuiles.
-    - Dessin des tuiles en forme de losange (ConvexShape).
+    - Calcul des positions des tuiles.
+    - Dessin des tuiles en forme de carre.
     - Couleurs et contours pour une meilleure lisibilité.
 
 
