@@ -118,18 +118,15 @@ void gui::drawMenu(sf::RenderWindow *window) {
     subtitle.setFillColor(sf::Color::White);
     subtitle.setPosition(window->getSize().x / 2.0f - subtitle.getGlobalBounds().width / 2.0f, 230);
 
-    sf::Text controls("Use Z, Q, S, D to move the map and + - to zoom", font, 30);
+    sf::Text controls("Use Z, Q, S, D to move the map and + - to zoom\n", font, 30);
     controls.setFillColor(sf::Color::White);
-    controls.setPosition(window->getSize().x / 2.0f - controls.getGlobalBounds().width / 2.0f, 500);
-
-    sf::Text instructions("Press 'Enter' to switch to the map view", font, 30);
-    instructions.setFillColor(sf::Color::White);
-    instructions.setPosition(window->getSize().x / 2.0f - instructions.getGlobalBounds().width / 2.0f, 550);
-
+    controls.setPosition(window->getSize().x / 2.0f - subtitle.getGlobalBounds().width / 2.0f, 500);
+    controls.setString(controls.getString() + "Hold press left button mouse on team name to show all players team information\n\n\n" +
+        "Press 'Enter' to switch to the map view");
+    
     window->draw(title);
     window->draw(subtitle);
     window->draw(controls);
-    window->draw(instructions);
 }
 
 void gui::drawMap(sf::RenderWindow *window) {
