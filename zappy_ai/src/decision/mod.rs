@@ -18,7 +18,7 @@ pub enum Action {
     CollectResource,
     LevelUp,
     Explore,
-    HatchEgg,
+    LayEgg,
     Wait,
 }
 
