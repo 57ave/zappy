@@ -43,6 +43,8 @@ class gui {
         Tile tile;
         std::vector<std::string> teams;
         std::vector<Player> players;
+        sf::Clock gameClock;
+        int timeGame = 0;
 
         void handle_server_data();
         void process_server_messages();
@@ -54,6 +56,8 @@ class gui {
         void parse_ppo(const std::string &message);
         void parse_plv(const std::string &message);
         void parse_pin(const std::string &message);
+        void parse_sgt(const std::string &message);
+        void parse_sst(const std::string &message);
 
         void parse_server_data(const std::string &data);
         void drawMenu(sf::RenderWindow *window);
