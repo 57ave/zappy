@@ -23,13 +23,18 @@ pub async fn make_decision(client: &mut ZappyClient) -> Result<(), ClientError> 
             (Priority::High, Action::LevelUp) => {
                 handle_level_up(client).await?;
             },
+            (_, Action::HatchEgg) => {
+                client.fork().await?;
+            }
             (_, Action::Explore) => {
                 handle_exploration(client).await?;
             },
-            _ => {
-                client.wait().await?;
-            }
+            (_) => {
+                handle_exploration(client).await?;
+            },
+            
         }
+        println!("\n---");
         sleep(Duration::from_millis(100)).await;
         client.reset_look_cache();
     }
@@ -67,7 +72,7 @@ async fn handle_level_up(client: &mut ZappyClient) -> Result<(), ClientError> {
 
 async fn handle_exploration(client: &mut ZappyClient) -> Result<(), ClientError> {
     client.get_look_cached().await?;
-    client.forward().await?;
+    client.right().await?;
     
     Ok(())
 }
