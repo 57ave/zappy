@@ -129,8 +129,7 @@ void gui::parse_pgt(const std::string &message) {
     iss >> pgt >> id >> resourceType;
     for (auto &player : players) {
         if (player.getId() == id) {
-            player.animation = true;
-            player.animationMessage = "Player " + std::to_string(id) + " is taking " + resourceNames[resourceType];
+            addPopMessage("Player " + std::to_string(id) + " is taking " + resourceNames[resourceType]);
         }
     }
 }
@@ -142,8 +141,7 @@ void gui::parse_pdr(const std::string &message) {
     iss >> pdr >> id >> resourceType;
     for (auto &player : players) {
         if (player.getId() == id) {
-            player.animation = true;
-            player.animationMessage = "Player " + std::to_string(id) + " is dropping " + resourceNames[resourceType];
+            addPopMessage("Player " + std::to_string(id) + " is dropping " + resourceNames[resourceType]);
         }
     }
 }
@@ -155,8 +153,7 @@ void gui::parse_pfk(const std::string &message) {
     iss >> pfk >> id;
     for (auto &player : players) {
         if (player.getId() == id) {
-            player.animation = true;
-            player.animationMessage = "Egg laying by the player " + std::to_string(id);
+            addPopMessage("Egg laying by the player " + std::to_string(id));
         }
     }
 }
@@ -167,6 +164,12 @@ void gui::parse_enw(const std::string &message) {
     int eggId, playerId, x, y;
     iss >> enw >> eggId >> playerId >> x >> y;
     eggs.push_back(Egg(eggId, playerId, x, y));
+    
+    for (auto &player : players) {
+        if (player.getId() == eggs.back().getPlayerId()) {
+            addPopMessage("Egg laying by the player " + std::to_string(eggs.back().getPlayerId()));
+        }
+    }
     parse_pfk("pfk " + std::to_string(playerId) + "\n");
 }
 
@@ -193,6 +196,21 @@ void gui::parse_edi(const std::string &message) {
     addPopMessage("Egg " + std::to_string(eggId) + " is dead");
 }
 
+void gui::parse_pbc(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pbc;
+    int id;
+    std::string broadcastMessage;
+    iss >> pbc >> id;
+    std::getline(iss, broadcastMessage);
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            addPopMessage("Player " + std::to_string(id) + " is broadcast:\n" + broadcastMessage);
+            return;
+        }
+    }
+}
+
 void gui::parse_server_data(const std::string &message) {
     std::string type = message.substr(0, 3);
 
@@ -211,7 +229,8 @@ void gui::parse_server_data(const std::string &message) {
         {"pfk", &gui::parse_pfk},
         {"enw", &gui::parse_enw},
         {"ebo", &gui::parse_ebo},
-        {"edi", &gui::parse_edi}
+        {"edi", &gui::parse_edi},
+        {"pbc", &gui::parse_pbc}
 
     };
 

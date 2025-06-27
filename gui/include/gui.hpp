@@ -27,7 +27,6 @@
 
 struct PopMessage {
     std::string text;
-    sf::Clock clock;
 };
 
 class gui {
@@ -72,6 +71,7 @@ class gui {
         void parse_enw(const std::string &message);
         void parse_ebo(const std::string &message);
         void parse_edi(const std::string &message);
+        void parse_pbc(const std::string &message);
 
         void parse_server_data(const std::string &data);
         void drawMenu(sf::RenderWindow *window);

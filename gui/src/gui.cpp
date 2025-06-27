@@ -300,11 +300,6 @@ void gui::drawPlayers(sf::RenderWindow *window) {
         float posY = originY + y * tileHeight;
         sprite.setPosition(posX, posY);
         window->draw(sprite);
-
-        if (player.animation == true) {
-            addPopMessage(player.animationMessage);
-            player.animation = false;
-        }
     }
 }
 
@@ -370,7 +365,11 @@ void gui::drawResources(sf::RenderWindow *window) {
 }
 
 void gui::addPopMessage(const std::string& msg) {
-    popMessages.push_back({msg, sf::Clock()});
+    const size_t maxMessages = 10;
+    if (popMessages.size() >= maxMessages) {
+        popMessages.pop_front();
+    }
+    popMessages.push_back({msg});
 }
 
 void gui::drawPopMessages(sf::RenderWindow *window) {
@@ -378,10 +377,6 @@ void gui::drawPopMessages(sf::RenderWindow *window) {
     float margin = 20.f;
     float messageSpacing = 8.f;
     float y = window->getSize().y - margin;
-
-    while (!popMessages.empty() && popMessages.front().clock.getElapsedTime().asSeconds() > 1.0f) {
-        popMessages.pop_front();
-    }
 
     for (auto it = popMessages.rbegin(); it != popMessages.rend(); ++it) {
         sf::Text popMessage(it->text, font, 30);
