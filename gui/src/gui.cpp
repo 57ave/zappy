@@ -86,13 +86,19 @@ int gui::run() {
         process_server_messages();
         if (welcome_received == false)
             window.close();
+        if (gameClock.getElapsedTime().asSeconds() >= 1.0f) {
+            timeGame++;
+            gameClock.restart();
+        }
         if (menu == true) {
-            window.clear(sf::Color::Yellow);
+            window.clear(sf::Color(150, 220, 255));
             drawMenu(&window);
             window.display();
         } else {
-            window.clear(sf::Color::Yellow);
-            drawIsometricMap(&window);
+            window.clear(sf::Color(150, 220, 255));
+            drawMap(&window);
+            drawResources(&window);
+            drawPlayers(&window);
             drawTopBar(&window);
             window.display();
         }
@@ -106,31 +112,28 @@ void gui::drawMenu(sf::RenderWindow *window) {
         menu = false;
     }
     sf::Text title("Zappy", font, 50);
-    title.setFillColor(sf::Color::Black);
+    title.setFillColor(sf::Color::White);
     title.setPosition(window->getSize().x / 2.0f - title.getGlobalBounds().width / 2.0f, 100);
 
     sf::Text subtitle("The game is about managing a world and its inhabitants.\n"
         "This world, Trantor is geographically made of zero-relief planes:\n"
         "no craters, no valleys, no mountains.\n"
         "The game board represents the entirety of this world s surface, like a world map.", font, 30);
-    subtitle.setFillColor(sf::Color::Black);
+    subtitle.setFillColor(sf::Color::White);
     subtitle.setPosition(window->getSize().x / 2.0f - subtitle.getGlobalBounds().width / 2.0f, 230);
 
-    sf::Text controls("Use Z, Q, S, D to move the map", font, 30);
-    controls.setFillColor(sf::Color::Black);
-    controls.setPosition(window->getSize().x / 2.0f - controls.getGlobalBounds().width / 2.0f, 500);
-
-    sf::Text instructions("Press 'Enter' to switch to the map view", font, 30);
-    instructions.setFillColor(sf::Color::Black);
-    instructions.setPosition(window->getSize().x / 2.0f - instructions.getGlobalBounds().width / 2.0f, 550);
-
+    sf::Text controls("Use Z, Q, S, D to move the map and + - to zoom\n", font, 30);
+    controls.setFillColor(sf::Color::White);
+    controls.setPosition(window->getSize().x / 2.0f - subtitle.getGlobalBounds().width / 2.0f, 500);
+    controls.setString(controls.getString() + "Hold press left button mouse on team name to show all players team information\n\n\n" +
+        "Press 'Enter' to switch to the map view");
+    
     window->draw(title);
     window->draw(subtitle);
     window->draw(controls);
-    window->draw(instructions);
 }
 
-void gui::drawIsometricMap(sf::RenderWindow *window) {
+void gui::drawMap(sf::RenderWindow *window) {
     float moveSpeed = 20.0f;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
         isoOffsetY -= moveSpeed;
@@ -140,26 +143,32 @@ void gui::drawIsometricMap(sf::RenderWindow *window) {
         isoOffsetX -= moveSpeed;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
         isoOffsetX += moveSpeed;
-    float tileWidth = 64.0f;
-    float tileHeight = 32.0f;
-    float originX = window->getSize().x / 2.0f + isoOffsetX;
-    float originY = 100.0f + isoOffsetY;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Add)) {
+        zoom += 0.05;
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Subtract)) {
+        if (zoom > 0.2f)
+            zoom -= 0.05;
+    }
+    float tileWidth = 64.0f * zoom;
+    float tileHeight = 64.0f * zoom;
+
+    float mapWidthPx = map.getWidth() * tileWidth;
+    float mapHeightPx = map.getHeight() * tileHeight;
+    float originX = (window->getSize().x - mapWidthPx) / 2.0f + isoOffsetX;
+    float originY = (window->getSize().y - mapHeightPx) / 2.0f + isoOffsetY;
 
     for (int y = 0; y < map.getHeight(); ++y) {
         for (int x = 0; x < map.getWidth(); ++x) {
-            float isoX = (x - y) * (tileWidth / 2.0f);
-            float isoY = (x + y) * (tileHeight / 2.0f);
+            float posX = originX + x * tileWidth;
+            float posY = originY + y * tileHeight;
 
-            sf::ConvexShape diamond(4);
-            diamond.setPoint(0, sf::Vector2f(0, tileHeight / 2.0f));
-            diamond.setPoint(1, sf::Vector2f(tileWidth / 2.0f, 0));
-            diamond.setPoint(2, sf::Vector2f(tileWidth, tileHeight / 2.0f));
-            diamond.setPoint(3, sf::Vector2f(tileWidth / 2.0f, tileHeight));
-            diamond.setFillColor(sf::Color(60, 180, 60));
-            diamond.setOutlineColor(sf::Color(40, 120, 40));
-            diamond.setOutlineThickness(1.0f);
-            diamond.setPosition(originX + isoX - tileWidth / 2.0f, originY + isoY);
-            window->draw(diamond);
+            sf::RectangleShape tile(sf::Vector2f(tileWidth, tileHeight));
+            tile.setPosition(posX, posY);
+            tile.setFillColor(sf::Color(60, 180, 60));
+            tile.setOutlineColor(sf::Color(40, 120, 40));
+            tile.setOutlineThickness(1.0f);
+            window->draw(tile);
         }
     }
 }
@@ -171,8 +180,158 @@ void gui::drawTopBar(sf::RenderWindow *window) {
     topBar.setOutlineThickness(2.0f);
     window->draw(topBar);
     
-    sf::Text title("Player status:", font, 30); 
+    sf::Text title("Teams:", font, 30); 
     title.setFillColor(sf::Color::Black);
     title.setPosition(10, 15);
     window->draw(title);
+
+    sf::Text timerText(" ", font, 30);
+    int minutes = timeGame / 60;
+    if (timeGame <= 60) {
+        timerText.setString("Timer: " + std::to_string(timeGame) + "s");
+    } else {
+        timerText.setString("Timer: " + std::to_string(minutes) + "m " + std::to_string(timeGame % 60) + "s");
+    }
+    timerText.setFillColor(sf::Color::Black);
+    timerText.setPosition(window->getSize().x - 250, 15);
+    window->draw(timerText);
+
+    if (teams.empty()) {
+        return;
+    }
+    for (size_t i = 0; i < teams.size(); ++i) {
+        sf::Text teamText(teams[i], font, 30);
+        teamText.setFillColor(sf::Color(((i+1) * 100) % 255, ((i+1) * 50) % 255, ((i+1) * 150) % 255));
+        teamText.setPosition(110 * (i+1), 15);
+        window->draw(teamText);
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            sf::Vector2i mousePos = sf::Mouse::getPosition(*window);
+            if (teamText.getGlobalBounds().contains(static_cast<sf::Vector2f>(mousePos))) {
+                sf::RectangleShape moreInfoBox(sf::Vector2f(350, 1000));
+                moreInfoBox.setFillColor(sf::Color(200, 200, 200, 200));
+                moreInfoBox.setPosition(20, 82);
+                window->draw(moreInfoBox);
+                for (const auto& player : players) {
+                    if (player.getTeam() == teams[i]) {
+                        sf::Text playerInfo("Id: " + std::to_string(player.getId()) +
+                           " Lvl: " + std::to_string(player.getLevel()) +
+                           " Loc: x = " + std::to_string(player.getX()) +
+                           ", y = " + std::to_string(player.getY()) + "\n" , font, 20);
+                        const auto& inv = player.getInventory();
+                        std::string invStr = "Inv: food(" + std::to_string(inv[0]) + ") linemate(" + std::to_string(inv[1]) +
+                            ") deraumere(" + std::to_string(inv[2]) + ")\nsibur(" + std::to_string(inv[3]) +
+                            ") mendiane(" + std::to_string(inv[4]) + ") phiras(" + std::to_string(inv[5]) +
+                            ") thystame(" + std::to_string(inv[6]) + ")";
+                        playerInfo.setFillColor(sf::Color::Black);
+                        playerInfo.setPosition(25, 90 + 100 * (&player - &players[0]));
+                        playerInfo.setString(playerInfo.getString() + invStr);
+                        window->draw(playerInfo);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void gui::drawPlayers(sf::RenderWindow *window) {
+    static sf::Texture playerTexture;
+    if (!playerTexture.loadFromFile("assets/player.png")) {
+        std::cerr << "Erreur de chargement du sprite joueur" << std::endl;
+        return;
+    }
+
+    float tileWidth = 64.0f * zoom;
+    float tileHeight = 64.0f * zoom;
+    float mapWidthPx = map.getWidth() * tileWidth;
+    float mapHeightPx = map.getHeight() * tileHeight;
+    float originX = (window->getSize().x - mapWidthPx) / 2.0f + isoOffsetX;
+    float originY = (window->getSize().y - mapHeightPx) / 2.0f + isoOffsetY;
+
+    for (const auto& player : players) {
+        int x = player.getX();
+        int y = player.getY();
+        int orientation = player.getDirection();
+
+        if (orientation == 0) {
+            continue;
+        }
+        sf::Sprite sprite(playerTexture);
+        if (orientation == 1) {
+            sprite.setTextureRect(sf::IntRect(0 * 32, 12 * 32, 32, 32));
+        } else if (orientation == 2) {
+            sprite.setTextureRect(sf::IntRect(0 * 32, 10 * 32, 32, 32));
+        } else if (orientation == 3) {
+            sprite.setTextureRect(sf::IntRect(0 * 32, 6 * 32, 32, 32));
+        } else if (orientation == 4) {
+            sprite.setTextureRect(sf::IntRect(0 * 32, 8 * 32, 32, 32));
+        }
+        sprite.setScale(tileWidth / 32.0f, tileHeight / 32.0f);
+
+        float posX = originX + x * tileWidth;
+        float posY = originY + y * tileHeight;
+
+        sprite.setPosition(posX, posY);
+        window->draw(sprite);
+    }
+}
+
+void gui::drawResources(sf::RenderWindow *window) {
+    static sf::Texture ResourcesTexture;
+    static bool textureLoaded = false;
+    if (!textureLoaded) {
+        if (!ResourcesTexture.loadFromFile("assets/materials.png")) {
+            std::cerr << "Erreur de chargement des ressources" << std::endl;
+            return;
+        }
+        textureLoaded = true;
+    }
+    sf::IntRect spriteRects[7] = {
+        {5 * 16, 2 * 16, 16, 16}, //food
+        {1 * 16, 1 * 16, 16, 16}, //linemate
+        {2 * 16, 2 * 16, 16, 16}, //deraumere
+        {4 * 16, 2 * 16, 16, 16}, //sibur
+        {5 * 16, 0 * 16, 16, 16}, //mendiane
+        {5 * 16, 1 * 16, 16, 16}, //phiras
+        {6 * 16, 2 * 16, 16, 16}  //thystame
+    };
+
+    float offsets[7][2] = {
+        {0.5f, 0.1f},
+        {0.85f, 0.15f},
+        {0.9f, 0.5f},
+        {0.85f, 0.85f},
+        {0.5f, 0.9f},
+        {0.15f, 0.85f},
+        {0.1f, 0.5f}
+    };
+
+    float tileWidth = 64.0f * zoom;
+    float tileHeight = 64.0f * zoom;
+    float mapWidthPx = map.getWidth() * tileWidth;
+    float mapHeightPx = map.getHeight() * tileHeight;
+    float originX = (window->getSize().x - mapWidthPx) / 2.0f + isoOffsetX;
+    float originY = (window->getSize().y - mapHeightPx) / 2.0f + isoOffsetY;
+
+    for (int j = 0; j < map.getHeight(); j++) {
+        for (int i = 0; i < map.getWidth(); i++) {
+            Tile &tile = map.at(i, j);
+            const auto& resources = tile.getResources();
+            if (resources.empty())
+                continue;
+            int resCount = std::min((int)resources.size(), 7);
+            for (int r = 0; r < resCount; ++r) {
+                if (resources[r] > 0) {
+                    sf::Sprite sprite(ResourcesTexture);
+                    sprite.setTextureRect(spriteRects[r]);
+                    sprite.setScale(tileWidth / 64.0f, tileHeight / 64.0f);
+
+                    float posX = originX + i * tileWidth + offsets[r][0] * tileWidth - 8 * zoom;
+                    float posY = originY + j * tileHeight + offsets[r][1] * tileHeight - 8 * zoom;
+
+                    sprite.setPosition(posX, posY);
+                    window->draw(sprite);
+                }
+            }
+        }
+    }
 }
