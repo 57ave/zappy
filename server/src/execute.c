@@ -67,7 +67,6 @@ void execute_command(server_t *server, player_t *player, char *command)
 {
     char *original_command = clean_command_copy(command);
     char *cmd_name = strtok(command, " \n");
-    char *args = strtok(NULL, "\n");
 
     if (!cmd_name || !original_command) {
         dprintf(player->fd, "ko\n");
