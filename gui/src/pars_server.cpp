@@ -211,6 +211,29 @@ void gui::parse_pbc(const std::string &message) {
     }
 }
 
+void gui::parse_pdi(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pdi;
+    int id;
+    iss >> pdi >> id;
+    players.erase(std::remove_if(players.begin(), players.end(),
+        [id](const Player &player) { return player.getId() == id; }), players.end());
+    addPopMessage("Player " + std::to_string(id) + " is dead");
+}
+
+void gui::parse_pex(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pex;
+    int id;
+    iss >> pex >> id;
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            addPopMessage("Player " + std::to_string(id) + " has been ejected");
+            return;
+        }
+    }
+}
+
 void gui::parse_server_data(const std::string &message) {
     std::string type = message.substr(0, 3);
 
@@ -230,8 +253,9 @@ void gui::parse_server_data(const std::string &message) {
         {"enw", &gui::parse_enw},
         {"ebo", &gui::parse_ebo},
         {"edi", &gui::parse_edi},
-        {"pbc", &gui::parse_pbc}
-
+        {"pbc", &gui::parse_pbc},
+        {"pdi", &gui::parse_pdi},
+        {"pex", &gui::parse_pex}
     };
 
     auto it = cmd.find(type);
