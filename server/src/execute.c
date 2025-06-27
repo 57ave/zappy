@@ -9,9 +9,8 @@
 #include "server.h"
 
 static void handle_info_commands(server_t *server, player_t *player,
-    const char *cmd_name, const char *args, const char *original_command)
+    const char *cmd_name, const char *original_command)
 {
-    (void)args;
     if (strcmp(cmd_name, "Look") == 0)
         add_command_with_time(player, original_command, CMD_LOOK_TIME);
     if (strcmp(cmd_name, "Inventory") == 0)
@@ -81,7 +80,7 @@ void execute_command(server_t *server, player_t *player, char *command)
         return;
     }
     handle_movement_commands(player, cmd_name, original_command);
-    handle_info_commands(server, player, cmd_name, args, original_command);
+    handle_info_commands(server, player, cmd_name, original_command);
     handle_action_commands(player, cmd_name, original_command);
     free(original_command);
 }
