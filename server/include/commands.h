@@ -85,10 +85,6 @@ void add_players_to_tile_content(int player_count, char *tile_content,
 void add_resources_to_tile_content(tile_t *tile, char *tile_content,
     bool *first_item);
 void parse_command_args(char *command_copy, char **cmd_name, char **args);
-void send_command_error(player_t *player);
-void handle_found_command(server_t *server, player_t *player, command_t *cmd,
-    char *original_command, char *args);
-void execute_action_command(server_t *server, player_t *player, char *command);
 void remove_action_from_queue(player_t *player);
 void process_player_action(server_t *server, player_t *player);
 int calculate_total_tiles(int vision_range);
@@ -133,5 +129,13 @@ void handle_team_command(server_t *server, server_config_t *config,
 void process_new_connections(server_t *server);
 void remove_disconnected_clients(server_t *server);
 void update_game_state(server_t *server);
+void init_response_calculation(player_t *player, size_t *total_size,
+    int *vision_range);
+size_t add_separator_size(server_t *server, player_t *player,
+    size_t base_size);
+size_t calculate_all_levels_size(server_t *server, player_t *player,
+    int vision_range);
+size_t process_vision_level_size(server_t *server, player_t *player,
+    int level);
 
 #endif /* !COMMANDS_H_ */
