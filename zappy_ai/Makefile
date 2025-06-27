@@ -1,3 +1,10 @@
+##
+## EPITECH PROJECT, 2025
+## Makefile Zappy
+## File description:
+## Makefile
+##
+
 .PHONY: all build run clean
 
 all: build

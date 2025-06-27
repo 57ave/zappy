@@ -11,6 +11,7 @@
 static void handle_info_commands(server_t *server, player_t *player,
     const char *cmd_name, const char *args, const char *original_command)
 {
+    (void)args;
     if (strcmp(cmd_name, "Look") == 0)
         add_command_with_time(player, original_command, CMD_LOOK_TIME);
     if (strcmp(cmd_name, "Inventory") == 0)
@@ -54,12 +55,12 @@ static char *clean_command_copy(const char *original)
 {
     char *copy = create_command_copy(original);
     char *newline_pos;
-    
+
     if (!copy)
         return NULL;
     newline_pos = strchr(copy, '\n');
     if (newline_pos)
-        *newline_pos = '\0'; 
+        *newline_pos = '\0';
     return copy;
 }
 
@@ -78,7 +79,7 @@ void execute_command(server_t *server, player_t *player, char *command)
         dprintf(player->fd, "ko\n");
         free(original_command);
         return;
-    }    
+    }
     handle_movement_commands(player, cmd_name, original_command);
     handle_info_commands(server, player, cmd_name, args, original_command);
     handle_action_commands(player, cmd_name, original_command);

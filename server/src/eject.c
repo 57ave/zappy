@@ -11,7 +11,7 @@
 position_t calculate_ejection_position(player_t *ejector, server_t *server)
 {
     position_t pos = {ejector->x, ejector->y};
-    
+
     switch (ejector->direction) {
         case UP:
             pos.y = (pos.y - 1 + server->map->height) % server->map->height;
@@ -34,7 +34,8 @@ bool eject_player_from_tile(server_t *server, player_t *ejector,
 {
     position_t new_pos;
 
-    if (target == ejector || target->x != ejector->x || target->y != ejector->y) {
+    if (target == ejector || target->x != ejector->x ||
+        target->y != ejector->y) {
         return false;
     }
     new_pos = calculate_ejection_position(ejector, server);
@@ -60,7 +61,7 @@ void cmd_take(server_t *server, player_t *player, char *args)
 {
     resource_type_t resource = get_resource_type(args);
     tile_t *tile = &server->map->tiles[player->y][player->x];
-    
+
     if (resource == RESOURCE_INVALID) {
         dprintf(player->fd, "ko\n");
         return;

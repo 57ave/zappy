@@ -41,8 +41,8 @@ static void handle_ia_command(server_t *server, int i, const char *buffer)
         write(server->pfds[i].fd, "ko\n", 3);
         return;
     }
-    printf("Executing IA command: '%s' for player %d\n", 
-           command_copy, server->clients[i].player->id);
+    printf("Executing IA command: '%s' for player %d\n",
+        command_copy, server->clients[i].player->id);
     execute_command(server, server->clients[i].player, command_copy);
     free(command_copy);
 }

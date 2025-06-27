@@ -21,6 +21,7 @@ int count_players_on_tile(server_t *server, int x, int y)
 
 size_t calculate_element_size(const char *name, int value)
 {
+    (void)value;
     return strlen(name) + 20;
 }
 
@@ -28,11 +29,13 @@ size_t calculate_tile_content_size(tile_context_t *ctx)
 {
     tile_t *tile = &ctx->server->map->tiles[ctx->pos.y][ctx->pos.x];
     size_t size = 0;
-    int player_count = count_players_on_tile(ctx->server, ctx->pos.x, ctx->pos.y);
-    
+    int player_count = count_players_on_tile(ctx->server, ctx->pos.x,
+        ctx->pos.y);
+
     for (int r = 0; r < RESOURCE_COUNT; r++) {
         if (tile->resources[r] > 0)
-            size += calculate_element_size(get_resource_name(r), tile->resources[r]);
+            size += calculate_element_size(get_resource_name(r),
+                tile->resources[r]);
     }
     if (player_count > 0)
         size += calculate_element_size("player", player_count);

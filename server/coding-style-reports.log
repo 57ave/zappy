@@ -1,0 +1,4 @@
+./include/commands.h:89: MAJOR:C-F5
+./src/calculate.c:90: MAJOR:C-F4
+./src/execute.c:11: MAJOR:C-F5
+./src/look.c:94: MAJOR:C-F4

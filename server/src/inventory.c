@@ -45,7 +45,8 @@ void cmd_broadcast(server_t *server, player_t *player, char *args)
 
     for (int i = 0; i < server->player_nb; i++) {
         if (server->players[i] != player) {
-            dprintf(server->players[i]->fd, "message %d,%s\n", direction, args);
+            dprintf(server->players[i]->fd, "message %d,%s\n", direction,
+                args);
         }
     }
     dprintf(player->fd, "ok\n");
@@ -54,9 +55,10 @@ void cmd_broadcast(server_t *server, player_t *player, char *args)
 void cmd_connect_nbr(server_t *server, player_t *player)
 {
     team_t *team = find_team(player->team, server->config);
+    int available_slots = 0;
 
     if (team) {
-        int available_slots = team->max_players - team->actual_players;
+        available_slots = team->max_players - team->actual_players;
         dprintf(player->fd, "%d\n", available_slots);
     } else {
         dprintf(player->fd, "0\n");

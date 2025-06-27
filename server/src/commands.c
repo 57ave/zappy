@@ -49,23 +49,23 @@ const char *get_resource_name(resource_type_t type)
     }
 }
 
-void cmd_forward(server_t *server, player_t *player)
+void cmd_forward(server_t *serv, player_t *player)
 {
     int new_x = player->x;
     int new_y = player->y;
 
     switch (player->direction) {
         case UP:
-            new_y = (player->y - 1 + server->map->height) % server->map->height;
+            new_y = (player->y - 1 + serv->map->height) % serv->map->height;
             break;
         case RIGHT:
-            new_x = (player->x + 1) % server->map->width;
+            new_x = (player->x + 1) % serv->map->width;
             break;
         case DOWN:
-            new_y = (player->y + 1) % server->map->height;
+            new_y = (player->y + 1) % serv->map->height;
             break;
         case LEFT:
-            new_x = (player->x - 1 + server->map->width) % server->map->width;
+            new_x = (player->x - 1 + serv->map->width) % serv->map->width;
             break;
     }
     player->x = new_x;

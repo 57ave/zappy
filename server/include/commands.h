@@ -8,25 +8,23 @@
 #ifndef COMMANDS_H_
     #define COMMANDS_H_
     #include "server.h"
-
-    #include <stdio.h>    
+    #include <stdio.h>
     #include <stdlib.h>
     #include <string.h>
     #include <math.h>
     #include <sys/time.h>
-    #include <unistd.h> 
-
-#define CMD_FORWARD_TIME 7
-#define CMD_RIGHT_TIME 7
-#define CMD_LEFT_TIME 7
-#define CMD_LOOK_TIME 7
-#define CMD_INVENTORY_TIME 1
-#define CMD_BROADCAST_TIME 7
-#define CMD_FORK_TIME 42
-#define CMD_EJECT_TIME 7
-#define CMD_TAKE_TIME 7
-#define CMD_SET_TIME 7
-#define CMD_INCANTATION_TIME 300
+    #include <unistd.h>
+    #define CMD_FORWARD_TIME 7
+    #define CMD_RIGHT_TIME 7
+    #define CMD_LEFT_TIME 7
+    #define CMD_LOOK_TIME 7
+    #define CMD_INVENTORY_TIME 1
+    #define CMD_BROADCAST_TIME 7
+    #define CMD_FORK_TIME 42
+    #define CMD_EJECT_TIME 7
+    #define CMD_TAKE_TIME 7
+    #define CMD_SET_TIME 7
+    #define CMD_INCANTATION_TIME 300
 
 typedef struct {
     char *name;
@@ -78,11 +76,14 @@ void process_completed_actions(server_t *server);
 resource_type_t get_resource_type(const char *name);
 const char *get_resource_name(resource_type_t type);
 int count_players_on_tile(server_t *server, int x, int y);
-position_t calculate_look_coordinates(player_t *player, server_t *server, look_params_t params);
+position_t calculate_look_coordinates(player_t *player, server_t *server,
+    look_params_t params);
 char *create_tile_content(tile_context_t *ctx);
 void build_tile_content(server_t *server, position_t pos, char *tile_content);
-void add_players_to_tile_content(int player_count, char *tile_content, bool *first_item);
-void add_resources_to_tile_content(tile_t *tile, char *tile_content, bool *first_item);
+void add_players_to_tile_content(int player_count, char *tile_content,
+    bool *first_item);
+void add_resources_to_tile_content(tile_t *tile, char *tile_content,
+    bool *first_item);
 void parse_command_args(char *command_copy, char **cmd_name, char **args);
 void send_command_error(player_t *player);
 void handle_found_command(server_t *server, player_t *player, command_t *cmd,
@@ -97,7 +98,8 @@ size_t calculate_response_size(server_t *server, player_t *player);
 size_t calculate_element_size(const char *name, int value);
 size_t calculate_tile_content_size(tile_context_t *ctx);
 char *create_resource_info(int resource_index, int quantity);
-bool add_single_resource(tile_t *tile, char *tile_content, bool *first_item, int r);
+bool add_single_resource(tile_t *tile, char *tile_content, bool *first_item,
+    int r);
 char *create_player_info(int player_count);
 char *format_inventory_item(int resource_index, int quantity);
 size_t calculate_item_size(int resource_index, int quantity);
@@ -105,7 +107,8 @@ size_t calculate_total_size(player_t *player);
 void add_item_to_response(char *response, const char *item, bool first);
 bool process_single_item(player_t *player, int i, char *response, bool *first);
 position_t calculate_ejection_position(player_t *ejector, server_t *server);
-bool eject_player_from_tile(server_t *server, player_t *ejector, player_t *target);
+bool eject_player_from_tile(server_t *server, player_t *ejector,
+    player_t *target);
 char *build_inventory_response(player_t *player);
 bool process_single_tile(process_context_t *ctx, look_params_t params);
 bool process_vision_level(process_context_t *ctx, int level);
@@ -114,7 +117,8 @@ bool add_tile_to_response(response_context_t *ctx, const char *tile_content);
 char *create_element_string(const char *name, int value);
 bool add_element_to_response(response_context_t *ctx, const char *element);
 bool add_tile_players(tile_context_t *tile_ctx, response_context_t *resp_ctx);
-bool add_tile_resources(tile_context_t *tile_ctx, response_context_t *resp_ctx);
+bool add_tile_resources(tile_context_t *tile_ctx,
+    response_context_t *resp_ctx);
 int calcul_pos_sub(int player, int offset, int map);
 int calcul_pos_add(int player, int offset, int map);
 void add_command_with_time(player_t *player, const char *command, int time);

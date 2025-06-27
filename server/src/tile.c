@@ -8,7 +8,8 @@
 #include "commands.h"
 #include "server.h"
 
-bool add_tile_to_response(response_context_t *ctx, const char *tile_content)
+bool add_tile_to_response(response_context_t *ctx,
+    const char *tile_content)
 {
     if (!*ctx->first_tile)
         strcat(ctx->response, ",");
@@ -38,7 +39,8 @@ bool add_element_to_response(response_context_t *ctx, const char *element)
 
 bool add_tile_players(tile_context_t *tile_ctx, response_context_t *resp_ctx)
 {
-    int player_count = count_players_on_tile(tile_ctx->server, tile_ctx->pos.x, tile_ctx->pos.y);
+    int player_count = count_players_on_tile(tile_ctx->server,
+                            tile_ctx->pos.x, tile_ctx->pos.y);
     char *element;
 
     if (player_count <= 0)
@@ -53,17 +55,17 @@ bool add_tile_players(tile_context_t *tile_ctx, response_context_t *resp_ctx)
 
 bool add_tile_resources(tile_context_t *tile_ctx, response_context_t *resp_ctx)
 {
-    tile_t *tile = &tile_ctx->server->map->tiles[tile_ctx->pos.y][tile_ctx->pos.x];
+    tile_t *tile =
+        &tile_ctx->server->map->tiles[tile_ctx->pos.y][tile_ctx->pos.x];
     char *element;
 
     for (int r = 0; r < RESOURCE_COUNT; r++) {
         if (tile->resources[r] <= 0)
             continue;
-        
-        element = create_element_string(get_resource_name(r), tile->resources[r]);
+        element = create_element_string(get_resource_name(r),
+                    tile->resources[r]);
         if (!element)
             return false;
-        
         add_element_to_response(resp_ctx, element);
         free(element);
     }

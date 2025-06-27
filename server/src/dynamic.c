@@ -13,10 +13,9 @@ char *format_inventory_item(int resource_index, int quantity)
     const char *resource_name = get_resource_name(resource_index);
     int needed_size = strlen(resource_name) + 20;
     char *item = malloc(needed_size);
-    
+
     if (!item)
         return NULL;
-    
     snprintf(item, needed_size, "%s %d", resource_name, quantity);
     return item;
 }
@@ -24,6 +23,8 @@ char *format_inventory_item(int resource_index, int quantity)
 size_t calculate_item_size(int resource_index, int quantity)
 {
     const char *resource_name = get_resource_name(resource_index);
+
+    (void)quantity;
     return strlen(resource_name) + 20;
 }
 

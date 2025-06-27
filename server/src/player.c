@@ -44,8 +44,8 @@ void update_player_actions(server_t *server)
 
     for (int i = 0; i < server->player_nb; i++) {
         player = server->players[i];
-        if (!player) continue;
-        
+        if (!player)
+            continue;
         action = player->action_queue;
         if (!action) {
             continue;

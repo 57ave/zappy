@@ -55,7 +55,8 @@ void process_player_action(server_t *server, player_t *player)
         return;
     parse_command_args(command_copy, &cmd_name, &args);
     if (cmd_name) {
-        printf("Executing completed action: %s for player %d\n", cmd_name, player->id);
+        printf("Executing completed action: %s for player %d\n",
+            cmd_name, player->id);
         execute_single_command(server, player, cmd_name, args);
     }
     free(command_copy);

@@ -32,7 +32,8 @@ static char *create_clean_team_name(const char *buffer)
     return team_name;
 }
 
-static int validate_team_availability(team_t *team, const char *team_name, int fd)
+static int validate_team_availability(team_t *team, const char *team_name,
+    int fd)
 {
     if (!team) {
         printf("Team '%s' not found\n", team_name);

@@ -25,12 +25,12 @@ static void process_client_messages(server_t *server, server_config_t *config)
 
 static int should_update_game(struct timeval *last_tick, long tick_interval)
 {
-    struct timeval current_time;
     long elapsed;
+    struct timeval current_time;
 
     gettimeofday(&current_time, NULL);
-    elapsed = (current_time.tv_sec - last_tick->tv_sec) * 1000000 + 
-              (current_time.tv_usec - last_tick->tv_usec);
+    elapsed = (current_time.tv_sec - last_tick->tv_sec) * 1000000 +
+        (current_time.tv_usec - last_tick->tv_usec);
     if (elapsed >= tick_interval) {
         *last_tick = current_time;
         return 1;
@@ -40,11 +40,11 @@ static int should_update_game(struct timeval *last_tick, long tick_interval)
 
 static void display_server_info(server_config_t *config)
 {
-    printf("Server launched: port=%d, freq=%d, teams=%d\n", 
-           config->port, config->freq, config->team_nb);
+    printf("Server launched: port=%d, freq=%d, teams=%d\n",
+        config->port, config->freq, config->team_nb);
     for (int i = 0; i < config->team_nb; i++) {
-        printf("Team %d: %s (max_players=%d)\n", 
-               i, config->teams[i].name, config->teams[i].max_players);
+        printf("Team %d: %s (max_players=%d)\n",
+            i, config->teams[i].name, config->teams[i].max_players);
     }
 }
 

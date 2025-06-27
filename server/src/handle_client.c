@@ -54,7 +54,8 @@ void register_player(server_t *server, int client_index,
     available_slot = team->max_players - team->actual_players;
     dprintf(fd, "%d\n", available_slot);
     dprintf(fd, "%d %d\n", server->map->width, server->map->height);
-    printf("Player registered: id=%d, fd=%d, team=%s\n", player->id, player->fd, player->team);
+    printf("Player registered: id=%d, fd=%d, team=%s\n", player->id,
+        player->fd, player->team);
 }
 
 team_t *find_team(const char *name, server_config_t *config)

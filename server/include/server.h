@@ -57,7 +57,8 @@ void handle_client(server_t *serv);
 int launch_server(server_t *serv, server_config_t *config);
 void reset_server_clients(server_t *serv);
 int parse_args(int ac, char **av, server_config_t *config);
-int read_client_data(server_t *server, int i, char *buffer, size_t buffer_size);
+int read_client_data(server_t *server, int i, char *buffer,
+    size_t buffer_size);
 void handle_client_message(server_t *server, int i, const char *buffer,
     server_config_t *config);
 void send_data_gui(server_t *server, int gui_fd, server_config_t *config);
@@ -74,4 +75,5 @@ void handle_game_tick(server_t *server, server_config_t *config,
     struct timeval *last_tick, int *tick_count);
 void process_clients(server_t *server, server_config_t *config,
     int clients_connected);
+
 #endif /* !SERVER_H_ */

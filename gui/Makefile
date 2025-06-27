@@ -20,7 +20,7 @@ OBJ	=	$(SRC:.cpp=.o)
 
 CC	=	g++
 
-CFLAGS	=	-Wall -Wextra 
+CFLAGS	=	-Wall -Wextra
 
 SFMLFLAGS =	-lsfml-graphics -lsfml-window -lsfml-system
 

@@ -10,8 +10,8 @@
 
 void cmd_incantation(server_t *server, player_t *player)
 {
+    (void)server;
     player->lvl++;
-    dprintf(player->fd, "Elevation underway\nCurrent level: %d\n", player->lvl);
+    dprintf(player->fd, "Elevation underway\nCurrent level: %d\n",
+        player->lvl);
 }
-
-

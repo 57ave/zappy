@@ -36,7 +36,7 @@ int count_tile_elements(server_t *server, position_t pos)
     tile_t *tile = &server->map->tiles[pos.y][pos.x];
     int elements = 0;
     int player_count = 0;
-    
+
     for (int r = 0; r < RESOURCE_COUNT; r++) {
         if (tile->resources[r] > 0)
             elements++;
@@ -53,7 +53,7 @@ int calculate_total_elements(server_t *server, player_t *player)
     int total_elements = 0;
     look_params_t params;
     position_t pos;
-    
+
     for (int level = 0; level <= vision_range; level++) {
         for (int offset = -level; offset <= level; offset++) {
             params.level = level;

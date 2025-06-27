@@ -11,11 +11,13 @@
 int calcul_pos_add(int player, int offset, int map)
 {
     int a = (player + offset + map) % map;
+
     return a;
 }
 
 int calcul_pos_sub(int player, int offset, int map)
 {
     int a = (player - offset + map) % map;
+
     return a;
 }
