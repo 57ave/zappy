@@ -8,60 +8,55 @@
 #include "commands.h"
 #include "server.h"
 
-void execute_command(server_t *server, player_t *player, char *command)
+char *create_command_copy(const char *original)
 {
-    char *cmd_name;
-    char *args;
-    command_t *found_cmd;
-    
-    parse_command(command, &cmd_name, &args);
-    
-    if (!cmd_name) {
-        send_command_error(player);
-        return;
-    }
-    
-    found_cmd = find_command(cmd_name);
-    if (found_cmd) {
-        handle_found_command(server, player, found_cmd, command, args);
-    } else {
-        send_command_error(player);
-    }
+    char *copy = NULL;
+    size_t len = strlen(original) + 1;
+
+    copy = malloc(len);
+    if (!copy)
+        return NULL;
+    strncpy(copy, original, len - 1);
+    copy[len - 1] = '\0';
+    return copy;
 }
 
-void execute_action_command(server_t *server, player_t *player, char *command)
+void parse_command_args(char *command_copy, char **cmd_name, char **args)
 {
-    char *cmd_name = strtok(command, " ");
-    char *args = strtok(NULL, "");
-    
-    for (int j = 0; commands[j].name != NULL; j++) {
-        if (strcmp(cmd_name, commands[j].name) == 0) {
-            commands[j].execute(server, player, args ? args : "");
-            break;
-        }
-    }
+    *cmd_name = strtok(command_copy, " ");
+    *args = strtok(NULL, "");
 }
 
-void remove_action_from_queue(player_t *player, action_t *action)
+void execute_movement_and_info_commands(server_t *server, player_t *player,
+    const char *cmd_name, const char *safe_args)
 {
-    player->action_queue = action->next;
-    free(action->command);
-    free(action);
+    if (strcmp(cmd_name, "Forward") == 0)
+        cmd_forward(server, player);
+    if (strcmp(cmd_name, "Right") == 0)
+        cmd_right(player);
+    if (strcmp(cmd_name, "Left") == 0)
+        cmd_left(player);
+    if (strcmp(cmd_name, "Look") == 0)
+        cmd_look(server, player);
+    if (strcmp(cmd_name, "Inventory") == 0)
+        cmd_inventory(player);
+    if (strcmp(cmd_name, "Broadcast") == 0)
+        cmd_broadcast(server, player, (char *)safe_args);
 }
 
-void process_player_action(server_t *server, player_t *player)
+void handle_movement_commands(player_t *player, const char *cmd_name,
+    const char *original_command)
 {
-    action_t *action = player->action_queue;
-    
-    if (action && action->remaining_ticks <= 0) {
-        execute_action_command(server, player, action->command);
-        remove_action_from_queue(player, action);
-    }
+    if (strcmp(cmd_name, "Forward") == 0)
+        add_command_with_time(player, original_command, CMD_FORWARD_TIME);
+    if (strcmp(cmd_name, "Right") == 0)
+        add_command_with_time(player, original_command, CMD_RIGHT_TIME);
+    if (strcmp(cmd_name, "Left") == 0)
+        add_command_with_time(player, original_command, CMD_LEFT_TIME);
 }
 
-void process_completed_actions(server_t *server)
+void add_command_with_time(player_t *player, const char *command, int time)
 {
-    for (int i = 0; i < server->player_nb; i++) {
-        process_player_action(server, server->players[i]);
-    }
+    printf("Adding command to queue: %s (%d ticks)\n", command, time);
+    add_action_to_queue(player, command, time);
 }
