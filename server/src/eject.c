@@ -44,10 +44,10 @@ bool eject_player_from_tile(server_t *server, player_t *ejector,
     return true;
 }
 
-void cmd_eject(server_t *server, player_t *player, char *args)
+void cmd_eject(server_t *server, player_t *player)
 {
     bool ejected_someone = false;
-    
+
     for (int i = 0; i < server->player_nb; i++) {
         if (eject_player_from_tile(server, player, server->players[i])) {
             ejected_someone = true;
@@ -65,7 +65,6 @@ void cmd_take(server_t *server, player_t *player, char *args)
         dprintf(player->fd, "ko\n");
         return;
     }
-    
     if (tile->resources[resource] > 0) {
         tile->resources[resource]--;
         player->inventory[resource]++;
@@ -77,12 +76,11 @@ void cmd_take(server_t *server, player_t *player, char *args)
 void cmd_set(server_t *server, player_t *player, char *args)
 {
     resource_type_t resource = get_resource_type(args);
-    
+
     if (resource == RESOURCE_INVALID) {
         dprintf(player->fd, "ko\n");
         return;
     }
-    
     if (player->inventory[resource] > 0) {
         player->inventory[resource]--;
         server->map->tiles[player->y][player->x].resources[resource]++;
