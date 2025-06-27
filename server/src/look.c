@@ -68,28 +68,3 @@ void cmd_look(server_t *server, player_t *player)
     free(response);
 }
 
-position_t calculate_look_coordinates(player_t *player, server_t *server,
-    look_params_t params)
-{
-    position_t p;
-
-    switch (player->direction) {
-    case UP:
-        p.x = calcul_pos_add(player->x, params.offset, server->map->width);
-        p.y = calcul_pos_sub(player->y, params.level, server->map->height);
-        break;
-    case RIGHT:
-        p.x = (player->x + params.level) % server->map->width;
-        p.y = calcul_pos_add(player->y, params.offset, server->map->height);
-        break;
-    case DOWN:
-        p.x = calcul_pos_sub(player->x, params.offset, server->map->width);
-        p.y = (player->y + params.level) % server->map->height;
-        break;
-    case LEFT:
-        p.x = calcul_pos_sub(player->x, params.level, server->map->width);
-        p.y = calcul_pos_sub(player->y, params.offset, server->map->height);
-        break;
-    }
-    return p;
-}
