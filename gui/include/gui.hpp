@@ -27,7 +27,6 @@
 
 struct PopMessage {
     std::string text;
-    sf::Clock clock;
 };
 
 class gui {
