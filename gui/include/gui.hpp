@@ -24,6 +24,11 @@
 #include "../include/Tile.hpp"
 #include "../include/Player.hpp"
 
+struct PopMessage {
+    std::string text;
+    sf::Clock clock;
+};
+
 class gui {
     private:
         int sock;
@@ -45,6 +50,7 @@ class gui {
         std::vector<Player> players;
         sf::Clock gameClock;
         int timeGame = 0;
+        std::deque<PopMessage> popMessages;
 
         void handle_server_data();
         void process_server_messages();
@@ -58,6 +64,8 @@ class gui {
         void parse_pin(const std::string &message);
         void parse_sgt(const std::string &message);
         void parse_sst(const std::string &message);
+        void parse_pgt(const std::string &message);
+        void parse_pdr(const std::string &message);
 
         void parse_server_data(const std::string &data);
         void drawMenu(sf::RenderWindow *window);
@@ -66,6 +74,9 @@ class gui {
         void drawPlayers(sf::RenderWindow *window);
         void drawResources(sf::RenderWindow *window);
         void drawEggs();
+
+        void addPopMessage(const std::string& msg);
+        void drawPopMessages(sf::RenderWindow *window);
 
     public:
         gui();

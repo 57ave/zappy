@@ -9,6 +9,7 @@
     #define PLAYER_HPP
     #include <array>
     #include <string>
+    #include <SFML/System/Clock.hpp>
 
 class Player {
     public:
@@ -23,6 +24,9 @@ class Player {
         int getLevel() const;
         const std::string& getTeam() const;
         const std::array<int, 7> &getInventory() const;
+        bool animation = false;
+        sf::Clock animationClock;
+        std::string animationMessage;
     private:
         int _id;
         int _x;
