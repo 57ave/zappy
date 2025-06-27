@@ -64,28 +64,3 @@ int calculate_total_elements(server_t *server, player_t *player)
     }
     return total_elements;
 }
-
-size_t calculate_response_size(server_t *server, player_t *player)
-{
-    int vision_range = player->lvl;
-    size_t total_size = 3;
-    look_params_t params;
-    int total_elements = 0;
-    position_t pos;
-    tile_context_t ctx;
-
-    for (int level = 0; level <= vision_range; level++) {
-        for (int offset = -level; offset <= level; offset++) {
-            params.level = level;
-            params.offset = offset;
-            pos = calculate_look_coordinates(player, server, params);
-            ctx.server = server;
-            ctx.pos = pos;
-            total_size += calculate_tile_content_size(&ctx);
-        }
-    }
-    total_elements = calculate_total_elements(server, player);
-    if (total_elements > 1)
-        total_size += (total_elements - 1) * 2;
-    return total_size;
-}
