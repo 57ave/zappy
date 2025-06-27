@@ -61,7 +61,6 @@ void handle_client_message(server_t *server, int i, const char *buffer,
 void send_data_gui(server_t *server, int gui_fd, server_config_t *config);
 void update_player_life(server_t *server);
 void send_gui_resource_changes(server_t *server);
-<<<<<<< HEAD
 void read_client(server_t *server, server_config_t *config, int i);
 team_t *find_team(const char *name, server_config_t *config);
 void register_player(server_t *server, int client_index,
@@ -73,7 +72,5 @@ void handle_game_tick(server_t *server, server_config_t *config,
     struct timeval *last_tick, int *tick_count);
 void process_clients(server_t *server, server_config_t *config,
     int clients_connected);
-=======
->>>>>>> main
 
 #endif /* !SERVER_H_ */

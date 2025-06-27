@@ -45,16 +45,4 @@ typedef struct player_s {
 
 player_t *create_player(int id, int fd, const char *team, map_t *map);
 
-<<<<<<< HEAD
-// Gestion de la queue d'actions
-void add_action_to_queue(player_t *player, const char *cmd, int time);
-void remove_completed_action(player_t *player);
-void clear_action_queue(player_t *player);
-int get_queue_size(player_t *player);
-
-// Mise à jour (utilise forward declaration)
-void update_player_actions(server_t *server);
-
-=======
->>>>>>> main
 #endif /* !PLAYER_H_ */

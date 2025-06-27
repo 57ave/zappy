@@ -11,7 +11,6 @@ SRC	=	src/server.c    \
 		src/parse_arg.c	\
 		src/map.c	\
 		src/player.c	\
-<<<<<<< HEAD
 		src/commands.c	\
 		src/action.c	\
 		src/calculate.c	\
@@ -36,9 +35,6 @@ SRC	=	src/server.c    \
 		src/process_client.c	\
 		src/response.c	\
 		src/new_pos.c	\
-=======
-		src/send_data_gui.c	\
->>>>>>> main
 
 OBJ	=	$(SRC:.c=.o)
 

@@ -65,18 +65,3 @@ team_t *find_team(const char *name, server_config_t *config)
     }
     return NULL;
 }
-<<<<<<< HEAD
-=======
-
-void handle_client_message(server_t *server, int i, const char *buffer,
-    server_config_t *config)
-{
-    if (strncmp(buffer, "GRAPHIC", 7) == 0) {
-        server->clients[i].type = CLIENT_GUI;
-        write(server->pfds[i].fd, "WELCOME\n", 8);
-        send_data_gui(server, server->pfds[i].fd, config);
-    } else {
-        handle_team_command(server, config, i, buffer);
-    }
-}
->>>>>>> main
