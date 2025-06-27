@@ -23,6 +23,16 @@ SRC	=	src/server.c    \
 		src/look.c	\
 		src/tile.c	\
     	src/send_data_gui.c	\
+		src/position.c	\
+		src/queue.c	\
+		src/execute.c	\
+		src/actions_queue.c	\
+		src/handle_commands.c	\
+		src/handle_update.c	\
+		src/loop.c	\
+		src/tick.c	\
+		src/connection.c	\
+		src/process_client.c	\
 
 OBJ	=	$(SRC:.c=.o)
 
