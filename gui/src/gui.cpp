@@ -300,11 +300,6 @@ void gui::drawPlayers(sf::RenderWindow *window) {
         float posY = originY + y * tileHeight;
         sprite.setPosition(posX, posY);
         window->draw(sprite);
-
-        if (player.animation == true) {
-            addPopMessage(player.animationMessage);
-            player.animation = false;
-        }
     }
 }
 

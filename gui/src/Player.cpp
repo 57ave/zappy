@@ -10,7 +10,6 @@
 Player::Player(int id, const std::string &team)
     : _id(id), _x(0), _y(0), _direction(0), _lvl(1), _team(team) {
     _inventory.fill(0);
-    animation = false;
 }
 
 void Player::setPosition(int x, int y, int dir) {

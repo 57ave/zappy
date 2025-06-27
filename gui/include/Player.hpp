@@ -24,8 +24,6 @@ class Player {
         int getLevel() const;
         const std::string& getTeam() const;
         const std::array<int, 7> &getInventory() const;
-        bool animation = false;
-        std::string animationMessage;
     private:
         int _id;
         int _x;
