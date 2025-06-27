@@ -11,6 +11,7 @@
     #include "player.h"
 
 typedef enum {
+    CLIENT_UNIDENTIFIED = -1,
     CLIENT_IA,
     CLIENT_GUI
 } client_type_t;

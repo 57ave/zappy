@@ -8,10 +8,13 @@
 #ifndef COMMANDS_H_
     #define COMMANDS_H_
     #include "server.h"
+
     #include <stdio.h>    
     #include <stdlib.h>
     #include <string.h>
     #include <math.h>
+    #include <sys/time.h>
+    #include <unistd.h> 
 
 #define CMD_FORWARD_TIME 7
 #define CMD_RIGHT_TIME 7
@@ -57,20 +60,18 @@ typedef struct {
     response_context_t *resp_ctx;
 } process_context_t;
 
-extern command_t commands[];
-
-void cmd_forward(server_t *server, player_t *player, char *args);
-void cmd_right(server_t *server, player_t *player, char *args);
-void cmd_left(server_t *server, player_t *player, char *args);
-void cmd_look(server_t *server, player_t *player, char *args);
-void cmd_inventory(server_t *server, player_t *player, char *args);
+void cmd_forward(server_t *server, player_t *player);
+void cmd_right(player_t *player);
+void cmd_left(player_t *player);
+void cmd_look(server_t *server, player_t *player);
+void cmd_inventory(player_t *player);
 void cmd_broadcast(server_t *server, player_t *player, char *args);
-void cmd_connect_nbr(server_t *server, player_t *player, char *args);
-void cmd_fork(server_t *server, player_t *player, char *args);
-void cmd_eject(server_t *server, player_t *player, char *args);
+void cmd_connect_nbr(server_t *server, player_t *player);
+void cmd_fork(server_t *server, player_t *player);
+void cmd_eject(server_t *server, player_t *player);
 void cmd_take(server_t *server, player_t *player, char *args);
 void cmd_set(server_t *server, player_t *player, char *args);
-void cmd_incantation(server_t *server, player_t *player, char *args);
+void cmd_incantation(server_t *server, player_t *player);
 
 void execute_command(server_t *server, player_t *player, char *command);
 void process_completed_actions(server_t *server);
@@ -82,18 +83,17 @@ char *create_tile_content(tile_context_t *ctx);
 void build_tile_content(server_t *server, position_t pos, char *tile_content);
 void add_players_to_tile_content(int player_count, char *tile_content, bool *first_item);
 void add_resources_to_tile_content(tile_t *tile, char *tile_content, bool *first_item);
-void parse_command(char *command, char **cmd_name, char **args);
+void parse_command_args(char *command_copy, char **cmd_name, char **args);
 void send_command_error(player_t *player);
-command_t *find_command(char *cmd_name);
-void handle_found_command(server_t *server, player_t *player, command_t *cmd, char *original_command, char *args);
+void handle_found_command(server_t *server, player_t *player, command_t *cmd,
+    char *original_command, char *args);
 void execute_action_command(server_t *server, player_t *player, char *command);
-void remove_action_from_queue(player_t *player, action_t *action);
+void remove_action_from_queue(player_t *player);
 void process_player_action(server_t *server, player_t *player);
 int calculate_total_tiles(int vision_range);
 int count_tile_elements(server_t *server, position_t pos);
 int calculate_total_elements(server_t *server, player_t *player);
 size_t calculate_response_size(server_t *server, player_t *player);
-size_t calculate_resource_size(int resource_index, int quantity, bool need_separator);
 size_t calculate_element_size(const char *name, int value);
 size_t calculate_tile_content_size(tile_context_t *ctx);
 char *create_resource_info(int resource_index, int quantity);
@@ -115,5 +115,19 @@ char *create_element_string(const char *name, int value);
 bool add_element_to_response(response_context_t *ctx, const char *element);
 bool add_tile_players(tile_context_t *tile_ctx, response_context_t *resp_ctx);
 bool add_tile_resources(tile_context_t *tile_ctx, response_context_t *resp_ctx);
+int calcul_pos_sub(int player, int offset, int map);
+int calcul_pos_add(int player, int offset, int map);
+void add_command_with_time(player_t *player, const char *command, int time);
+char *create_command_copy(const char *original);
+void execute_movement_and_info_commands(server_t *server, player_t *player,
+    const char *cmd_name, const char *safe_args);
+void handle_movement_commands(player_t *player, const char *cmd_name,
+    const char *original_command);
+void handle_graphic_client_registration(server_t *server, int i);
+void handle_team_command(server_t *server, server_config_t *config,
+    int client_index, const char *buffer);
+void process_new_connections(server_t *server);
+void remove_disconnected_clients(server_t *server);
+void update_game_state(server_t *server);
 
 #endif /* !COMMANDS_H_ */
