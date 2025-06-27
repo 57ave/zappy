@@ -21,6 +21,13 @@ gui::gui() {
         std::cerr << "Erreur de chargement de la police" << std::endl;
         return;
     }
+    if (!music.openFromFile("assets/music.ogg")) {
+        std::cerr << "Erreur de chargement de la musique" << std::endl;
+    } else {
+        music.setLoop(true);
+        music.play();
+        music.setVolume(50);
+    }
 }
 
 gui::~gui() {
@@ -78,6 +85,7 @@ int gui::run() {
     sf::RenderWindow window(sf::VideoMode(1920, 1080), "Zappy");
     window.setFramerateLimit(60);
     sf::Event event;
+    music.play();
     while (window.isOpen()) {
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)

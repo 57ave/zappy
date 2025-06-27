@@ -11,6 +11,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/System.hpp>
+#include <SFML/Audio.hpp>
 #include <iostream>
 #include <string>
 #include <sys/socket.h>
@@ -54,6 +55,7 @@ class gui {
         sf::Clock gameClock;
         int timeGame = 0;
         std::deque<PopMessage> popMessages;
+        sf::Music music;
 
         void handle_server_data();
         void process_server_messages();
