@@ -265,6 +265,32 @@ void gui::parse_sbp(const std::string &message) {
     addPopMessage("Command parameter");
 }
 
+void gui::parse_pic(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pic;
+    int x, y, playerLvl, idPlayer1;
+    iss >> pic >> x >> y >> playerLvl >> idPlayer1;
+    std::vector<int> playerIds;
+    int id;
+    while (iss >> id) {
+        playerIds.push_back(id);
+    }
+    addPopMessage("Player " + std::to_string(idPlayer1) + " start an incantation");
+}
+
+void gui::parse_pie(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pie;
+    int x, y;
+    std::string result;
+    iss >> pie >> x >> y >> result;
+    if (result == "ko") {
+        addPopMessage("Incantation failed");
+    } else {
+        addPopMessage("Incantation succeeded");
+    }
+}
+
 void gui::parse_server_data(const std::string &message) {
     std::string type = message.substr(0, 3);
 
@@ -285,6 +311,8 @@ void gui::parse_server_data(const std::string &message) {
         {"ebo", &gui::parse_ebo},
         {"edi", &gui::parse_edi},
         {"pbc", &gui::parse_pbc},
+        {"pic", &gui::parse_pic},
+        {"pie", &gui::parse_pie},
         {"pdi", &gui::parse_pdi},
         {"pex", &gui::parse_pex},
         {"seg", &gui::parse_seg},

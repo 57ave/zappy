@@ -80,6 +80,8 @@ class gui {
         void parse_smg(const std::string &message);
         void parse_suc(const std::string &message);
         void parse_sbp(const std::string &message);
+        void parse_pic(const std::string &message);
+        void parse_pie(const std::string &message);
 
         void parse_server_data(const std::string &data);
         void drawMenu(sf::RenderWindow *window);
