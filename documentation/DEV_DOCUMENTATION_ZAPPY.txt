@@ -1,0 +1,357 @@
+                  📝 Documentation Développeur
+                    Projet Zappy by EPITECH
+                        Juin 2025
+
+                Sommaire :
+
+          1. Préambule 📚
+            1.1 🧠 Présentation du projet
+            1.2 🎯 Objectif du projet
+            1.3 🌍 Le monde de Trantor
+          2. Serveur Zappy (C) 💻
+            2.1 🧱 Structure générale
+            2.2 🧩 Composants principaux
+            2.3 🔄 Boucle principale du serveur
+            2.4 👥 Gestion des clients
+            2.5 🗺️ Carte et ressources
+            2.6 📺 Protocole GUI
+            2.7 💀 Vie et mort
+            2.8 🧮 Parsing des arguments
+          3. IA Zappy (Rust) 🤖
+            3.1 📦 Create : zappy_ai
+            3.2 🧠 Structure Principale
+            3.3 🔌 Connexion & Initialisation
+            3.4 🗺️ Map côté IA
+            3.5 ⚙️ Commandes IA
+            3.6 📨 Envoi de commande
+            3.7 ✅ Commandes utilitaires
+            3.8 🧪 Réponses attendues
+          4. GUI Zappy (C++/SFML) 🎨
+            4.1 🎨 Structure Générale
+            4.2 🔗 Connexion au serveur
+            4.3 🖥️ Affichage
+            4.4 🎮 Contrôles
+            4.5 🌍 Rendu de la carte
+            4.6 📬 Communication serveur
+            4.7 🛠️ Architecture interne
+          
+
+--------------------------------------------------------
+Erwan | Gustave | Zoltan | Aymen                     1/8
+--------------------------------------------------------
+
+-----------------------------------------------------------------
+📝Documentation Développeur                          Projet Zappy
+-----------------------------------------------------------------
+
+
+---------------------------------------------------------------------      
+      1. Préambule 📚
+---------------------------------------------------------------------
+
+
+Bienvenue dans la documentation développeur du projet zappy 
+
+🧠 Présentation du projet :
+    Zappy est un jeu multijoueur en réseau, inspiré de l’univers de
+    la science-fiction. Il plonge les joueurs dans un monde en 2D
+    nommé Trantor, où plusieurs équipes s’affrontent pour
+    atteindre l’élévation suprême, symbole de puissance et de
+    sagesse dans ce monde pacifique.
+
+🎯 Objectif du projet :
+    Chaque joueur incarne un Trantorien, un être curieux et non-
+    violent, qui évolue sur une carte contenant différentes
+    ressources. Le but est de faire progresser son équipe : la
+    première équipe à faire atteindre le niveau 8 à au moins 6 de
+    ses membres remporte la partie.
+
+🌍 Le Monde de Trantor :
+    Le monde est une carte en 2D sans relief, il est toroïdal : sortez
+    d’un côté et vous réapparaîtrez de l’autre côté.
+    De nombreuses ressources naturelles apparaissent au fil du
+    temps :
+       - De la nourriture pour survivre
+       - Des minéraux : linemate, deraumere, sibur, mendiane, phiras, thystame
+    Ces ressources sont fondamentales pour survivre et s’élever
+    dans la hiérarchie.
+
+
+--------------------------------------------------------
+Erwan | Gustave | Zoltan | Aymen                     2/8
+--------------------------------------------------------
+
+--------------------------------------------------------
+📝Documentation Développeur                Projet Zappy
+--------------------------------------------------------
+
+
+---------------------------------------------------------------------       
+      2. Serveur Zappy (C) 💻
+---------------------------------------------------------------------
+
+
+🧱 1. Structure générale
+    Le serveur est codé en C et repose sur :
+    - des sockets TCP (poll pour I/O non bloquant),
+    - une simulation temps réel basée sur des "ticks",
+    - des clients IA et un client GRAPHIC (GUI),
+    - une carte 2D avec ressources et joueurs.
+
+
+🧩 2. Composants principaux
+    | Composant          | Fichier(s)               | Description                                                      |
+    |--------------------|--------------------------|------------------------------------------------------------------|
+    |  server_t          | server.h, server.c       | Structure principale du serveur : map, clients, sockets          |
+    |  client_t          | client.h                 | Représente un client IA ou GUI                                   |
+    |  player_t          | player.h, player.c       | Représente un joueur (ID, position, inventaire, vie)             |
+    |  team_t            | player.h                 | Représente une équipe et ses slots                               |
+    |  map_t  /  tile_t  | map.h, map.c             | Représente la carte du jeu et ses ressources                     |
+    |  server_config_t   | server.h, parse_args.c   | Contient les paramètres de lancement                             |
+
+
+🔄 3. Boucle principale du serveur
+    Fichier : server.c
+      - launch_server :
+        - Réinitialise les clients,
+        - Lance une boucle infinie :
+          - Attente avec poll,
+          - Lecture des messages clients (read_client),
+          - Appels à update_player_life et generate_resources,
+          - Mise à jour GUI via send_gui_resource_changes.
+    - handle_tick : gère la fréquence de jeu via gettimeofday.
+
+
+👥 4. Gestion des clients
+    Fichier : handle_client.c
+      - read_client_data : lit les données d’un client avec read().
+      - handle_client_message : 
+        - Si le message est "GRAPHIC", c’est un client GUI.
+        - Sinon, on l’enregistre comme joueur via handle_team_command.
+      - register_player : crée un joueur (create_player) et l’ajoute à server->players.
+
+
+--------------------------------------------------------
+Erwan | Gustave | Zoltan | Aymen                     3/8
+--------------------------------------------------------
+
+--------------------------------------------------------
+📝Documentation Développeur                 Projet Zappy
+--------------------------------------------------------
+
+🗺️ 5. Carte et ressources
+    Fichier : map.c
+      - init_map : initialise la carte 2D.
+      - generate_resources : distribue des ressources aléatoirement.
+      - tile_t.changed : indique si un bct doit être envoyé au client GUI.
+
+
+📺 6. Protocole GUI
+    Fichier : send_data_to_gui.c
+      Utilise dprintf() pour envoyer :
+      - msz → taille de la map,
+      - bct x y ... → contenu d’une case,
+      - pnw, pin → info joueurs,
+      - tna → équipes,
+      - pdi → mort d’un joueur.
+
+
+💀 7. Vie et mort
+    Fichier : player.c
+
+      - Chaque joueur a un compteur life_remain et food_tick.
+      - update_player_life :
+        - décrémente life_remain,
+        - consomme de la nourriture,
+        - tue le joueur si besoin (dead\n + pdi au GUI).
+
+🧮 8. Parsing des arguments
+    Fichier : parse_args.c
+      Gère les flags :
+      - -p, -x, -y, -n, -c, -f
+      Remplit la structure server_config_t.
+
+
+--------------------------------------------------------
+Erwan | Gustave | Zoltan | Aymen                     4/8
+--------------------------------------------------------
+
+--------------------------------------------------------
+📝Documentation Développeur                 Projet Zappy
+--------------------------------------------------------
+
+
+---------------------------------------------------------------------
+      3. IA Zappy (Rust) 🤖
+---------------------------------------------------------------------
+
+
+📦 1. Create : zappy_ai
+    - Langage : Rust (2021)
+    - Asynchrone avec tokio
+    - CLI avec clap
+    - Sérialisation avec serde
+
+
+🧠 2. Structure Principale
+    | Composant            | Fichier(s)              | Description                                             |
+    |----------------------|-------------------------|---------------------------------------------------------|
+    | ZappyClient          | client.rs               | Gère la connexion TCP et la logique de communication    |
+    | Command / Resource   | commands.rs             | Enum des commandes/ressources et logique associée       |
+    | Map / Tile / Element | (structure utilisateur) | Représentation locale de la map côté IA                 |
+
+
+🔌 3. Connexion & Initialisation
+    ZappyClient::connect(...) -> Result<ZappyClient, ConnectionError>
+
+    1. Se connecte au serveur (tokio TCP).
+    2. Attend "WELCOME" du serveur.
+    3. Envoie le nom d’équipe.
+    4. Lit :
+      - Nombre de slots libres (int),
+      - Dimensions de la map (w, h).
+    5. Initialise la structure client.
+
+
+🗺️ 4. Map côté IA
+    La carte est stocké dans une structure Map qui contient Largeur, Hauteur et un vecteur de cases : 
+
+    rust
+    pub struct Map {
+        width: usize,
+        height: usize,
+        tiles: Vec<Tile>,
+    }
+    pub struct Tile {
+        pub element: Element,
+    }
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+    pub enum Element {
+        Empty, Wall, Player, Enemy, Projectile, PowerUp, Explosion,
+        Obstacle, Trap, Portal, Collectible, Hazard, Platform,
+        Ladder, Door, Key, Chest, Spawner, Checkpoint, Finish,
+    }
+
+
+--------------------------------------------------------
+Erwan | Gustave | Zoltan | Aymen                     5/8
+--------------------------------------------------------
+
+--------------------------------------------------------
+📝Documentation Développeur                 Projet Zappy
+--------------------------------------------------------
+
+⚙️ 5. Commandes IA
+    Les commandes sont définies dans l'enum Command :
+
+    rust
+    pub enum Command {
+        Forward, Right, Left, Look, Inventory,
+        Broadcast(String), ConnectNbr, Fork,
+        Eject, Take(Resource), Set(Resource), Incantation,
+    }
+    - Chaque commande possède :
+      - to_string() : transforme en texte à envoyer.
+      - get_duration(freq) : calcule la durée d’exécution.
+
+
+📨 6. Envoi de commande
+
+    rust
+    pub async fn execute_command(&mut self, cmd: Command) -> io::Result<String>
+
+    - Envoie la commande,
+    - Attend une réponse (tokio async),
+    - Retourne ok, ko, ou autre.
+
+
+✅ 7. Commandes utilitaires :
+
+    Ces commandes sont des fonctions async fournies par le client IA qui facilitent l’envoi des commandes IA au serveur en gérant 
+    la communication et les réponses automatiquement :
+      rust
+      forward(), right(), left(), look(), inventory()
+      take(resource), set(resource), fork(), incantation()
+      broadcast("msg"), connect_nbr(), eject()
+
+
+--------------------------------------------------------
+Erwan | Gustave | Zoltan | Aymen                     6/8
+--------------------------------------------------------
+
+--------------------------------------------------------
+📝Documentation Développeur                 Projet Zappy
+--------------------------------------------------------
+
+🧪 8. Réponses attendues :
+    | Commande      | Réponse                  |
+    |---------------|--------------------------|
+    | Forward       | ok / ko                  |
+    | Inventory     | [food 1, linemate 0...]  |
+    | Look          | [ linemate, food ... ]   |
+    | Connect_nbr   | 2                        |
+    | Incantation   | Elevation underway       |
+
+
+---------------------------------------------------------------------
+      4. GUI Zappy (C++/SFML) 🎨
+---------------------------------------------------------------------
+
+
+🎨 1. Structure Générale
+    - Application graphique développée en C++ avec la bibliothèque SFML.
+    - Interface de visualisation de la carte et des joueurs.
+    - Interaction utilisateur via clavier pour déplacement et navigation.
+
+
+🔗 2. Connexion au serveur
+    - Socket TCP en mode non bloquant.
+    - Envoie du message "GRAPHIC\n" pour s’identifier au serveur.
+    - Attend la réponse "WELCOME" avant d’afficher l’interface.
+
+
+🖥️ 3. Affichage
+    - Fenêtre SFML 1920x1080 pixels.
+    - Deux modes d’affichage :
+    - Menu initial avec instructions,
+    - Carte isométrique avec tuiles et joueurs.
+
+--------------------------------------------------------
+Erwan | Gustave | Zoltan | Aymen                     7/8
+--------------------------------------------------------
+
+--------------------------------------------------------
+📝Documentation Développeur                 Projet Zappy
+--------------------------------------------------------
+
+🎮 4. Contrôles
+    - Z, Q, S, D pour déplacer la vue du haut.
+      - Z : Aller en haut
+      - Q : Aller à droite
+      - S : Aller en bas
+      - D : Aller à gauche
+    - Le + et le - pour zoomer sur la carte.
+    - Entrée pour passer du menu à la vue carte.
+
+
+🌍 5. Rendu de la carte
+    - Calcul des positions des tuiles.
+    - Dessin des tuiles en forme de carre.
+    - Couleurs et contours pour une meilleure lisibilité.
+
+
+📬 6. Communication serveur
+    - Lecture en continu des messages via socket.
+    - Bufferage et découpage des messages terminés par '\n'.
+    - Parsing des messages pour mise à jour de la carte et des joueurs.
+
+
+🛠️ 7. Architecture interne
+    - Classes :
+      - gui : gère la connexion, les événements, le rendu.
+      - Map : stocke la carte et les tuiles.
+      - Tile et Player : représentent les cases et joueurs.
+
+--------------------------------------------------------
+Erwan | Gustave | Zoltan | Aymen                     8/8
+--------------------------------------------------------

@@ -1,26 +1,17 @@
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
+use crate::drone::inventory::Resource;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Direction {
-    North,
-    East,
-    South,
-    West,
+    Up,
+    Right,
+    Down,
+    Left,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum Resource {
-    Food,
-    Linemate,
-    Deraumere,
-    Sibur,
-    Mendiane,
-    Phiras,
-    Thystame,
-}
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Command {
     Forward,
     Right,
@@ -66,32 +57,4 @@ impl Command {
         Duration::from_secs_f64(base_time as f64 / freq as f64)
     }
 }
-
-impl Resource {
-    pub fn to_string(&self) -> String {
-        match self {
-            Resource::Food => "food",
-            Resource::Linemate => "linemate",
-            Resource::Deraumere => "deraumere",
-            Resource::Sibur => "sibur",
-            Resource::Mendiane => "mendiane",
-            Resource::Phiras => "phiras",
-            Resource::Thystame => "thystame",
-        }.to_string()
-    }
-
-    pub fn from_string(s: &str) -> Option<Self> {
-        match s {
-            "food" => Some(Resource::Food),
-            "linemate" => Some(Resource::Linemate),
-            "deraumere" => Some(Resource::Deraumere),
-            "sibur" => Some(Resource::Sibur),
-            "mendiane" => Some(Resource::Mendiane),
-            "phiras" => Some(Resource::Phiras),
-            "thystame" => Some(Resource::Thystame),
-            _ => None,
-        }
-    }
-}
-
     

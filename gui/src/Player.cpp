@@ -7,13 +7,9 @@
 
 #include "../include/Player.hpp"
 
-Player::Player(const std::string &team)
-    : _x(0), _y(0), _direction(0), _lvl(1), _team(team) {
+Player::Player(int id, const std::string &team)
+    : _id(id), _x(0), _y(0), _direction(0), _lvl(1), _team(team) {
     _inventory.fill(0);
-}
-
-void Player::setId(int id) {
-    _id = id;
 }
 
 void Player::setPosition(int x, int y, int dir) {

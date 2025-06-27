@@ -24,9 +24,7 @@
     #define SUCCESS 0
     #define FAILURE 84
 
-typedef struct server_config_s server_config_t;
-
-typedef struct server_s {
+typedef struct {
     int fd;
     int port;
     int nb_clients;
@@ -37,10 +35,9 @@ typedef struct server_s {
     int player_nb;
     struct pollfd pfds[NB_CONNECTION + 1];
     client_t clients[NB_CONNECTION + 1];
-    server_config_t *config; // Référence vers la configuration
 } server_t;
 
-struct server_config_s {
+typedef struct {
     int port;
     int width;
     int height;
@@ -50,7 +47,7 @@ struct server_config_s {
     int freq;
     int tick_freq;
     team_t *teams;
-};
+} server_config_t;
 
 void create_server(server_t *serv);
 void handle_client(server_t *serv);
@@ -64,6 +61,7 @@ void handle_client_message(server_t *server, int i, const char *buffer,
 void send_data_gui(server_t *server, int gui_fd, server_config_t *config);
 void update_player_life(server_t *server);
 void send_gui_resource_changes(server_t *server);
+<<<<<<< HEAD
 void read_client(server_t *server, server_config_t *config, int i);
 team_t *find_team(const char *name, server_config_t *config);
 void register_player(server_t *server, int client_index,
@@ -75,5 +73,7 @@ void handle_game_tick(server_t *server, server_config_t *config,
     struct timeval *last_tick, int *tick_count);
 void process_clients(server_t *server, server_config_t *config,
     int clients_connected);
+=======
+>>>>>>> main
 
 #endif /* !SERVER_H_ */

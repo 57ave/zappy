@@ -12,6 +12,7 @@ SRC	=	main.cpp			\
 		src/Map.cpp			\
 		src/Tile.cpp		\
 		src/Player.cpp		\
+		src/Egg.cpp			\
 
 
 NAME	=	zappy_gui

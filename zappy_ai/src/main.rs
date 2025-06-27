@@ -1,8 +1,13 @@
 mod client;
 mod commands;
+mod error;
+mod drone;
+mod decision;
 
 use clap::Parser;
-use tokio::time::{sleep, Duration};
+use error::ClientError;
+
+use crate::decision::decision_caller::make_decision;
 
 #[derive(Parser)]
 #[command(name = "zappy_ai")]
@@ -23,8 +28,11 @@ struct Args {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), ClientError> {
     let args = Args::parse();
-    let client = client::ZappyClient::connect(&args.machine, args.port, &args.name, 100, args.debug).await?;
+    let mut client = 
+    client::ZappyClient::connect(&args.machine, args.port, &args.name, 100, args.debug).await?;
+
+    make_decision(&mut client).await?;
     Ok(())
 }

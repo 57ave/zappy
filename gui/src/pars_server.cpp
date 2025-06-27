@@ -10,6 +10,10 @@
 #include <unordered_map>
 #include <functional>
 
+static std::string resourceNames[] = {
+    "food", "linemate", "deraumere", "sibur", "mendiane", "phiras", "thystame"
+};
+
 void gui::parse_msz(const std::string &message) {
     std::istringstream iss(message);
     std::string msz;
@@ -37,7 +41,7 @@ void gui::parse_tna(const std::string &message) {
     std::string team_name;
     iss >> tna >> team_name;
     if (!team_name.empty())
-        players.push_back(Player(team_name));
+        teams.push_back(team_name);
 }
 
 void gui::parse_pnw(const std::string &message) {
@@ -49,12 +53,160 @@ void gui::parse_pnw(const std::string &message) {
     if (team_name.empty()) {
         return;
     }
-    for (int i = 0; i < players.size(); i++) {
-        if (players.at(i).getTeam() == team_name) {
-            players.at(i).setId(id);
-            players.at(i).setPosition(x, y, direction);
-            players.at(i).setLevel(level);
+    players.push_back(Player(id, team_name));
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            player.setPosition(x, y, direction);
+            player.setLevel(level);
+            return;
+        }
+    }
+}
+
+void gui::parse_ppo(const std::string &message) {
+    std::istringstream iss(message);
+    std::string ppo;
+    int id, x, y, direction;
+    iss >> ppo >> id >> x >> y >> direction;
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            player.setPosition(x, y, direction);
+            return;
+        }
+    }
+}
+
+void gui::parse_plv(const std::string &message) {
+    std::istringstream iss(message);
+    std::string plv;
+    int id, level;
+    iss >> plv >> id >> level;
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            player.setLevel(level);
+            return;
+        }
+    }
+
+}
+
+void gui::parse_pin(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pin;
+    int id, x, y;
+    std::array<int, 7> resources;
+    iss >> pin >> id >> x >> y;
+    for (int &res : resources)
+        iss >> res;
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            player.setInventory(resources);
             break;
+        }
+    }
+}
+
+void gui::parse_sgt(const std::string &message) {
+    std::istringstream iss(message);
+    std::string sgt;
+    int time;
+    iss >> sgt >> time;
+    timeGame = time;
+}
+
+void gui::parse_sst(const std::string &message) {
+    std::istringstream iss(message);
+    std::string sgt;
+    int time;
+    iss >> sgt >> time;
+    timeGame = time;
+}
+
+void gui::parse_pgt(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pgt;
+    int id, resourceType;
+    iss >> pgt >> id >> resourceType;
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            addPopMessage("Player " + std::to_string(id) + " is taking " + resourceNames[resourceType]);
+        }
+    }
+}
+
+void gui::parse_pdr(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pdr;
+    int id, resourceType;
+    iss >> pdr >> id >> resourceType;
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            addPopMessage("Player " + std::to_string(id) + " is dropping " + resourceNames[resourceType]);
+        }
+    }
+}
+
+void gui::parse_pfk(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pfk;
+    int id;
+    iss >> pfk >> id;
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            addPopMessage("Egg laying by the player " + std::to_string(id));
+        }
+    }
+}
+
+void gui::parse_enw(const std::string &message) {
+    std::istringstream iss(message);
+    std::string enw;
+    int eggId, playerId, x, y;
+    iss >> enw >> eggId >> playerId >> x >> y;
+    eggs.push_back(Egg(eggId, playerId, x, y));
+    
+    for (auto &player : players) {
+        if (player.getId() == eggs.back().getPlayerId()) {
+            addPopMessage("Egg laying by the player " + std::to_string(eggs.back().getPlayerId()));
+        }
+    }
+    parse_pfk("pfk " + std::to_string(playerId) + "\n");
+}
+
+void gui::parse_ebo(const std::string &message) {
+    std::istringstream iss(message);
+    std::string ebo;
+    int eggId;
+    iss >> ebo >> eggId;
+    for (auto &egg : eggs) {
+        if (egg.getId() == eggId) {
+            addPopMessage("Egg " + std::to_string(eggId) + " is connected to player " + std::to_string(egg.getPlayerId()));
+            return;
+        }
+    }
+}
+
+void gui::parse_edi(const std::string &message) {
+    std::istringstream iss(message);
+    std::string edi;
+    int eggId;
+    iss >> edi >> eggId;
+    eggs.erase(std::remove_if(eggs.begin(), eggs.end(),
+        [eggId](const Egg &egg) { return egg.getId() == eggId; }), eggs.end());
+    addPopMessage("Egg " + std::to_string(eggId) + " is dead");
+}
+
+void gui::parse_pbc(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pbc;
+    int id;
+    std::string broadcastMessage;
+    iss >> pbc >> id;
+    std::getline(iss, broadcastMessage);
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            addPopMessage("Player " + std::to_string(id) + " is broadcast:\n" + broadcastMessage);
+            return;
         }
     }
 }
@@ -66,7 +218,20 @@ void gui::parse_server_data(const std::string &message) {
         {"msz", &gui::parse_msz},
         {"bct", &gui::parse_bct},
         {"tna", &gui::parse_tna},
-        {"pnw", &gui::parse_pnw}
+        {"pnw", &gui::parse_pnw},
+        {"ppo", &gui::parse_ppo},
+        {"plv", &gui::parse_plv},
+        {"pin", &gui::parse_pin},
+        {"sgt", &gui::parse_sgt},
+        {"sst", &gui::parse_sst},
+        {"pgt", &gui::parse_pgt},
+        {"pdr", &gui::parse_pdr},
+        {"pfk", &gui::parse_pfk},
+        {"enw", &gui::parse_enw},
+        {"ebo", &gui::parse_ebo},
+        {"edi", &gui::parse_edi},
+        {"pbc", &gui::parse_pbc}
+
     };
 
     auto it = cmd.find(type);
