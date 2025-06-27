@@ -23,6 +23,7 @@
 #include "../include/Map.hpp"
 #include "../include/Tile.hpp"
 #include "../include/Player.hpp"
+#include "../include/Egg.hpp"
 
 struct PopMessage {
     std::string text;
@@ -48,6 +49,7 @@ class gui {
         Tile tile;
         std::vector<std::string> teams;
         std::vector<Player> players;
+        std::vector<Egg> eggs;
         sf::Clock gameClock;
         int timeGame = 0;
         std::deque<PopMessage> popMessages;
@@ -66,6 +68,10 @@ class gui {
         void parse_sst(const std::string &message);
         void parse_pgt(const std::string &message);
         void parse_pdr(const std::string &message);
+        void parse_pfk(const std::string &message);
+        void parse_enw(const std::string &message);
+        void parse_ebo(const std::string &message);
+        void parse_edi(const std::string &message);
 
         void parse_server_data(const std::string &data);
         void drawMenu(sf::RenderWindow *window);
@@ -73,7 +79,7 @@ class gui {
         void drawTopBar(sf::RenderWindow *window);
         void drawPlayers(sf::RenderWindow *window);
         void drawResources(sf::RenderWindow *window);
-        void drawEggs();
+        void drawEggs(sf::RenderWindow *window);
 
         void addPopMessage(const std::string& msg);
         void drawPopMessages(sf::RenderWindow *window);

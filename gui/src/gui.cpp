@@ -98,6 +98,7 @@ int gui::run() {
             window.clear(sf::Color(150, 220, 255));
             drawMap(&window);
             drawResources(&window);
+            drawEggs(&window);
             drawPlayers(&window);
             drawPopMessages(&window);
             drawTopBar(&window);
@@ -230,6 +231,35 @@ void gui::drawTopBar(sf::RenderWindow *window) {
                 }
             }
         }
+    }
+}
+
+void gui::drawEggs(sf::RenderWindow *window) {
+    static sf::Texture eggTexture;
+    if (!eggTexture.loadFromFile("assets/egg.png")) {
+        std::cerr << "Erreur de chargement du sprite oeuf" << std::endl;
+        return;
+    }
+
+    float tileWidth = 64.0f * zoom;
+    float tileHeight = 64.0f * zoom;
+    float mapWidthPx = map.getWidth() * tileWidth;
+    float mapHeightPx = map.getHeight() * tileHeight;
+    float originX = (window->getSize().x - mapWidthPx) / 2.0f + isoOffsetX;
+    float originY = (window->getSize().y - mapHeightPx) / 2.0f + isoOffsetY;
+
+    float scale = tileWidth / 24.0f;
+    for (const auto& egg : eggs) {
+        sf::Sprite sprite(eggTexture);
+        sprite.setScale(scale, scale);
+
+        float spriteWidth = 16.0f * scale;
+        float spriteHeight = 16.0f * scale;
+        float posX = originX + egg.getX() * tileWidth + (tileWidth - spriteWidth) / 2.0f;
+        float posY = originY + egg.getY() * tileHeight + (tileHeight - spriteHeight) / 2.0f;
+
+        sprite.setPosition(posX, posY);
+        window->draw(sprite);
     }
 }
 
