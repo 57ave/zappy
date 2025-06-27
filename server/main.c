@@ -40,6 +40,8 @@ int main(int ac, char **av)
     if (parse_args(ac, av, &config) < 0) {
         return FAILURE;
     }
+    if (config.freq <= 0)
+        return FAILURE;
     server->port = config.port;
     create_server(server);
     server->map = malloc(sizeof(map_t));
