@@ -248,6 +248,23 @@ void gui::parse_seg(const std::string &message) {
     }
 }
 
+void gui::parse_smg(const std::string &message) {
+    std::istringstream iss(message);
+    std::string smg;
+    std::string msg;
+    iss >> smg;
+    std::getline(iss, msg);
+    addPopMessage("Server: " + msg);
+}
+
+void gui::parse_suc(const std::string &message) {
+    addPopMessage("Unknown command");
+}
+
+void gui::parse_sbp(const std::string &message) {
+    addPopMessage("Command parameter");
+}
+
 void gui::parse_server_data(const std::string &message) {
     std::string type = message.substr(0, 3);
 
@@ -270,7 +287,10 @@ void gui::parse_server_data(const std::string &message) {
         {"pbc", &gui::parse_pbc},
         {"pdi", &gui::parse_pdi},
         {"pex", &gui::parse_pex},
-        {"seg", &gui::parse_seg}
+        {"seg", &gui::parse_seg},
+        {"smg", &gui::parse_smg},
+        {"suc", &gui::parse_suc},
+        {"sbp", &gui::parse_sbp}
     };
 
     auto it = cmd.find(type);
