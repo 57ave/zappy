@@ -31,17 +31,15 @@ size_t calculate_total_size(player_t *player)
 {
     size_t total_size = 3;
     int item_count = 0;
-    
+
     for (int i = 0; i < RESOURCE_COUNT; i++) {
         if (player->inventory[i] <= 0)
             continue;
-        
         total_size += calculate_item_size(i, player->inventory[i]);
         if (item_count > 0)
             total_size += 2;
         item_count++;
     }
-    
     return total_size;
 }
 
@@ -58,11 +56,9 @@ bool process_single_item(player_t *player, int i, char *response, bool *first)
 
     if (player->inventory[i] <= 0)
         return true;
-    
     item = format_inventory_item(i, player->inventory[i]);
     if (!item)
         return false;
-    
     add_item_to_response(response, item, *first);
     free(item);
     *first = false;
