@@ -20,10 +20,9 @@ char *create_element_string(const char *name, int value)
 {
     size_t needed_size = strlen(name) + 20;
     char *element = malloc(needed_size);
-    
+
     if (!element)
         return NULL;
-    
     snprintf(element, needed_size, "%s %d", name, value);
     return element;
 }
@@ -40,14 +39,13 @@ bool add_element_to_response(response_context_t *ctx, const char *element)
 bool add_tile_players(tile_context_t *tile_ctx, response_context_t *resp_ctx)
 {
     int player_count = count_players_on_tile(tile_ctx->server, tile_ctx->pos.x, tile_ctx->pos.y);
-    
+    char *element;
+
     if (player_count <= 0)
         return true;
-    
-    char *element = create_element_string("player", player_count);
+    element = create_element_string("player", player_count);
     if (!element)
         return false;
-    
     add_element_to_response(resp_ctx, element);
     free(element);
     return true;

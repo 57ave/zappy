@@ -4,6 +4,7 @@
 ** File description:
 ** player
 */
+
 #include "player.h"
 #include "server.h"
 #include <stdio.h>
@@ -36,25 +37,6 @@ player_t *create_player(int id, int fd, const char *team, map_t *map)
     return player;
 }
 
-void add_action_to_queue(player_t *player, const char *cmd, int time)
-{
-    action_t *new = malloc(sizeof(action_t));
-    action_t *tmp = NULL;
-
-    new->command = strdup(cmd);
-    new->remaining_ticks = time;
-    new->next = NULL;
-    if (!player->action_queue) {
-        player->action_queue = new;
-        return;
-    }
-    tmp = player->action_queue;
-    while (tmp->next) {
-        tmp = tmp->next;
-    }
-    tmp->next = new;
-}
-
 void update_player_actions(server_t *server)
 {
     player_t *player = NULL;
@@ -62,6 +44,8 @@ void update_player_actions(server_t *server)
 
     for (int i = 0; i < server->player_nb; i++) {
         player = server->players[i];
+        if (!player) continue;
+        
         action = player->action_queue;
         if (!action) {
             continue;

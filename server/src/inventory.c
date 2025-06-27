@@ -13,32 +13,28 @@ char *build_inventory_response(player_t *player)
     size_t needed_size = calculate_total_size(player);
     char *response = malloc(needed_size);
     bool first = true;
-    
+
     if (!response)
         return NULL;
-    
     strcpy(response, "[");
-    
     for (int i = 0; i < RESOURCE_COUNT; i++) {
         if (!process_single_item(player, i, response, &first)) {
             free(response);
             return NULL;
         }
     }
-    
     strcat(response, "]");
     return response;
 }
 
-void cmd_inventory(server_t *server, player_t *player, char *args)
+void cmd_inventory(player_t *player)
 {
     char *response = build_inventory_response(player);
-    
+
     if (!response) {
         dprintf(player->fd, "ko\n");
         return;
     }
-    
     dprintf(player->fd, "%s\n", response);
     free(response);
 }
@@ -55,7 +51,7 @@ void cmd_broadcast(server_t *server, player_t *player, char *args)
     dprintf(player->fd, "ok\n");
 }
 
-void cmd_connect_nbr(server_t *server, player_t *player, char *args)
+void cmd_connect_nbr(server_t *server, player_t *player)
 {
     team_t *team = find_team(player->team, server->config);
 
@@ -67,14 +63,13 @@ void cmd_connect_nbr(server_t *server, player_t *player, char *args)
     }
 }
 
-void cmd_fork(server_t *server, player_t *player, char *args)
+void cmd_fork(server_t *server, player_t *player)
 {
     team_t *team = find_team(player->team, server->config);
 
     if (team) {
         team->eggs_available++;
         dprintf(player->fd, "ok\n");
-    } else {
-        dprintf(player->fd, "ko\n");
     }
+    dprintf(player->fd, "ko\n");
 }

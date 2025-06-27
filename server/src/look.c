@@ -10,15 +10,14 @@
 
 bool process_single_tile(process_context_t *ctx, look_params_t params)
 {
-    position_t pos = calculate_look_coordinates(ctx->player, ctx->server, params);
+    position_t pos = calculate_look_coordinates(ctx->player,
+        ctx->server, params);
     tile_context_t tile_ctx = {ctx->server, pos};
-    
+
     if (!add_tile_resources(&tile_ctx, ctx->resp_ctx))
         return false;
-    
     if (!add_tile_players(&tile_ctx, ctx->resp_ctx))
         return false;
-    
     return true;
 }
 
@@ -26,13 +25,12 @@ bool process_vision_level(process_context_t *ctx, int level)
 {
     look_params_t params;
     params.level = level;
-    
+
     for (int offset = -level; offset <= level; offset++) {
         params.offset = offset;
         if (!process_single_tile(ctx, params))
             return false;
     }
-    
     return true;
 }
 
@@ -58,40 +56,38 @@ char *build_look_response(server_t *server, player_t *player)
     return response;
 }
 
-void cmd_look(server_t *server, player_t *player, char *args)
+void cmd_look(server_t *server, player_t *player)
 {
     char *response = build_look_response(server, player);
-    
+
     if (!response) {
         dprintf(player->fd, "ko\n");
         return;
     }
-    
     dprintf(player->fd, "%s\n", response);
     free(response);
 }
 
 position_t calculate_look_coordinates(player_t *player, server_t *server, look_params_t params)
 {
-    position_t pos;
-
+    position_t p;
     switch (player->direction) {
     case UP:
-        pos.x = (player->x + params.offset + server->map->width) % server->map->width;
-        pos.y = (player->y - params.level + server->map->height) % server->map->height;
+        p.x = calcul_pos_add(player->x, params.offset, server->map->width);
+        p.y = calcul_pos_sub(player->y, params.level, server->map->height);
         break;
     case RIGHT:
-        pos.x = (player->x + params.level) % server->map->width;
-        pos.y = (player->y + params.offset + server->map->height) % server->map->height;
+        p.x = (player->x + params.level) % server->map->width;
+        p.y = calcul_pos_add(player->y, params.offset, server->map->height);
         break;
     case DOWN:
-        pos.x = (player->x - params.offset + server->map->width) % server->map->width;
-        pos.y = (player->y + params.level) % server->map->height;
+        p.x = calcul_pos_sub(player->x, params.offset, server->map->width);
+        p.y = (player->y + params.level) % server->map->height;
         break;
     case LEFT:
-        pos.x = (player->x - params.level + server->map->width) % server->map->width;
-        pos.y = (player->y - params.offset + server->map->height) % server->map->height;
+        p.x = calcul_pos_sub(player->x, params.level, server->map->width);
+        p.y = calcul_pos_sub(player->y, params.offset, server->map->height);
         break;
     }
-    return pos;
+    return p;
 }
