@@ -4,6 +4,7 @@
 ** File description:
 ** handle_client
 */
+
 #include "server.h"
 #include "commands.h"
 #include <stdlib.h>
@@ -33,16 +34,7 @@ int read_client_data(server_t *server, int i, char *buffer,
     return read_size;
 }
 
-team_t *find_team(const char *name, server_config_t *config)
-{
-    for (int i = 0; i < config->team_nb; i++) {
-        if (strcmp(config->teams[i].name, name) == 0)
-            return &config->teams[i];
-    }
-    return NULL;
-}
-
-static void register_player(server_t *server, int client_index,
+void register_player(server_t *server, int client_index,
     team_t *team, const char *team_name)
 {
     int fd = server->pfds[client_index].fd;
@@ -62,44 +54,14 @@ static void register_player(server_t *server, int client_index,
     available_slot = team->max_players - team->actual_players;
     dprintf(fd, "%d\n", available_slot);
     dprintf(fd, "%d %d\n", server->map->width, server->map->height);
+    printf("Player registered: id=%d, fd=%d, team=%s\n", player->id, player->fd, player->team);
 }
 
-void handle_team_command(server_t *server, server_config_t *config,
-    int client_index, const char *buffer)
+team_t *find_team(const char *name, server_config_t *config)
 {
-    int fd = server->pfds[client_index].fd;
-    char team_name[256] = {0};
-    team_t *team = NULL;
-
-    strncpy(team_name, buffer, sizeof(team_name) - 1);
-    team_name[strcspn(team_name, "\n")] = '\0';
-    team = find_team(team_name, config);
-    if (!team || team->actual_players >= team->max_players) {
-        write(fd, "ko\n", 3);
-        return;
+    for (int i = 0; i < config->team_nb; i++) {
+        if (strcmp(config->teams[i].name, name) == 0)
+            return &config->teams[i];
     }
-    register_player(server, client_index, team, team_name);
-}
-
-void handle_client_message(server_t *server, int i, const char *buffer,
-    server_config_t *config)
-{
-     if (strncmp(buffer, "GRAPHIC", 7) == 0) {
-        server->clients[i].type = CLIENT_GUI;
-        write(server->pfds[i].fd, "WELCOME\n", 8);
-        send_data_gui(server, server->pfds[i].fd, config);
-    } else {
-        handle_team_command(server, config, i, buffer);
-    }
-    
-    if (server->clients[i].type == CLIENT_IA && server->clients[i].player) {
-        char command_copy[1024];
-        strncpy(command_copy, buffer, sizeof(command_copy) - 1);
-        command_copy[sizeof(command_copy) - 1] = '\0';
-        execute_command(server, server->clients[i].player, command_copy);
-    }
-    
-    if (server->clients[i].type == CLIENT_GUI) {
-        printf("GUI command received: %s", buffer);
-    }
+    return NULL;
 }
