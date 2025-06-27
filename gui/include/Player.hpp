@@ -25,7 +25,6 @@ class Player {
         const std::string& getTeam() const;
         const std::array<int, 7> &getInventory() const;
         bool animation = false;
-        sf::Clock animationClock;
         std::string animationMessage;
     private:
         int _id;

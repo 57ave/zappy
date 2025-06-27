@@ -129,10 +129,8 @@ void gui::parse_pgt(const std::string &message) {
     iss >> pgt >> id >> resourceType;
     for (auto &player : players) {
         if (player.getId() == id) {
-            std::string cmd = "pin " + std::to_string(id) + "\n";
             player.animation = true;
             player.animationMessage = "Player " + std::to_string(id) + " is taking " + resourceNames[resourceType];
-            player.animationClock.restart();
         }
     }
 }
@@ -144,12 +142,55 @@ void gui::parse_pdr(const std::string &message) {
     iss >> pdr >> id >> resourceType;
     for (auto &player : players) {
         if (player.getId() == id) {
-            std::string cmd = "pin " + std::to_string(id) + "\n";
             player.animation = true;
             player.animationMessage = "Player " + std::to_string(id) + " is dropping " + resourceNames[resourceType];
-            player.animationClock.restart();
         }
     }
+}
+
+void gui::parse_pfk(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pfk;
+    int id;
+    iss >> pfk >> id;
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            player.animation = true;
+            player.animationMessage = "Egg laying by the player " + std::to_string(id);
+        }
+    }
+}
+
+void gui::parse_enw(const std::string &message) {
+    std::istringstream iss(message);
+    std::string enw;
+    int eggId, playerId, x, y;
+    iss >> enw >> eggId >> playerId >> x >> y;
+    eggs.push_back(Egg(eggId, playerId, x, y));
+    parse_pfk("pfk " + std::to_string(playerId) + "\n");
+}
+
+void gui::parse_ebo(const std::string &message) {
+    std::istringstream iss(message);
+    std::string ebo;
+    int eggId;
+    iss >> ebo >> eggId;
+    for (auto &egg : eggs) {
+        if (egg.getId() == eggId) {
+            addPopMessage("Egg " + std::to_string(eggId) + " is connected to player " + std::to_string(egg.getPlayerId()));
+            return;
+        }
+    }
+}
+
+void gui::parse_edi(const std::string &message) {
+    std::istringstream iss(message);
+    std::string edi;
+    int eggId;
+    iss >> edi >> eggId;
+    eggs.erase(std::remove_if(eggs.begin(), eggs.end(),
+        [eggId](const Egg &egg) { return egg.getId() == eggId; }), eggs.end());
+    addPopMessage("Egg " + std::to_string(eggId) + " is dead");
 }
 
 void gui::parse_server_data(const std::string &message) {
@@ -166,7 +207,12 @@ void gui::parse_server_data(const std::string &message) {
         {"sgt", &gui::parse_sgt},
         {"sst", &gui::parse_sst},
         {"pgt", &gui::parse_pgt},
-        {"pdr", &gui::parse_pdr}
+        {"pdr", &gui::parse_pdr},
+        {"pfk", &gui::parse_pfk},
+        {"enw", &gui::parse_enw},
+        {"ebo", &gui::parse_ebo},
+        {"edi", &gui::parse_edi}
+
     };
 
     auto it = cmd.find(type);
