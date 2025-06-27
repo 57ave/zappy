@@ -137,5 +137,6 @@ size_t calculate_all_levels_size(server_t *server, player_t *player,
     int vision_range);
 size_t process_vision_level_size(server_t *server, player_t *player,
     int level);
+void update_player_actions(server_t *server);
 
 #endif /* !COMMANDS_H_ */

@@ -24,6 +24,18 @@
     #define SUCCESS 0
     #define FAILURE 84
 
+    typedef struct {
+        int port;
+        int width;
+        int height;
+        char **team_name;
+        int team_nb;
+        int nb_clients;
+        int freq;
+        int tick_freq;
+        team_t *teams;
+    } server_config_t;
+
 typedef struct {
     int fd;
     int port;
@@ -35,19 +47,8 @@ typedef struct {
     int player_nb;
     struct pollfd pfds[NB_CONNECTION + 1];
     client_t clients[NB_CONNECTION + 1];
+    server_config_t *config;
 } server_t;
-
-typedef struct {
-    int port;
-    int width;
-    int height;
-    char **team_name;
-    int team_nb;
-    int nb_clients;
-    int freq;
-    int tick_freq;
-    team_t *teams;
-} server_config_t;
 
 void create_server(server_t *serv);
 void handle_client(server_t *serv);
@@ -72,5 +73,6 @@ void handle_game_tick(server_t *server, server_config_t *config,
     struct timeval *last_tick, int *tick_count);
 void process_clients(server_t *server, server_config_t *config,
     int clients_connected);
+void add_action_to_queue(player_t *player, const char *cmd, int time);
 
 #endif /* !SERVER_H_ */

@@ -10,6 +10,7 @@
     #include <stdbool.h>
 
 typedef enum {
+    RESOURCE_INVALID = -1,
     FOOD,
     LINEMATE,
     DERAUMERE,
