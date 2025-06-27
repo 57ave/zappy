@@ -234,6 +234,20 @@ void gui::parse_pex(const std::string &message) {
     }
 }
 
+void gui::parse_seg(const std::string &message) {
+    std::istringstream iss(message);
+    std::string seg;
+    int id;
+    iss >> seg >> id;
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            winnerTeam = player.getTeam();
+            endGame = true;
+            return;
+        }
+    }
+}
+
 void gui::parse_server_data(const std::string &message) {
     std::string type = message.substr(0, 3);
 
@@ -255,7 +269,8 @@ void gui::parse_server_data(const std::string &message) {
         {"edi", &gui::parse_edi},
         {"pbc", &gui::parse_pbc},
         {"pdi", &gui::parse_pdi},
-        {"pex", &gui::parse_pex}
+        {"pex", &gui::parse_pex},
+        {"seg", &gui::parse_seg}
     };
 
     auto it = cmd.find(type);

@@ -15,6 +15,7 @@ gui::gui() {
         std::cerr << "Erreur lors de la création de la socket" << std::endl;
     }
     menu = true;
+    endGame = false;
     serv_addr.sin_family = AF_INET;
     if (!font.loadFromFile("assets/font.ttf")) {
         std::cerr << "Erreur de chargement de la police" << std::endl;
@@ -94,14 +95,11 @@ int gui::run() {
             window.clear(sf::Color(150, 220, 255));
             drawMenu(&window);
             window.display();
+        } else if (endGame == true) {
+            drawEndGame(&window);
+            window.display();
         } else {
-            window.clear(sf::Color(150, 220, 255));
-            drawMap(&window);
-            drawResources(&window);
-            drawEggs(&window);
-            drawPlayers(&window);
-            drawPopMessages(&window);
-            drawTopBar(&window);
+            drawGame(&window);
             window.display();
         }
     }
@@ -132,6 +130,32 @@ void gui::drawMenu(sf::RenderWindow *window) {
     window->draw(title);
     window->draw(subtitle);
     window->draw(controls);
+}
+
+void gui::drawEndGame(sf::RenderWindow *window) {
+    window->clear(sf::Color(150, 220, 255));
+    sf::Text endText("Game Over\n", font, 50);
+    endText.setString(endText.getString() + "Winner: " + winnerTeam);
+    endText.setFillColor(sf::Color::White);
+    endText.setPosition(window->getSize().x / 2.0f - endText.getGlobalBounds().width / 2.0f, window->getSize().y / 2.0f - endText.getGlobalBounds().height / 2.0f - 50);
+    window->draw(endText);
+    sf::Text controls("Press 'Ctrl' + 'Enter' to exit", font, 30);
+    controls.setFillColor(sf::Color::White);
+    controls.setPosition(window->getSize().x / 2.0f - controls.getGlobalBounds().width / 2.0f, window->getSize().y / 2.0f + endText.getGlobalBounds().height / 2.0f + 20);
+    window->draw(controls);
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Enter) && sf::Keyboard::isKeyPressed(sf::Keyboard::LControl)) {
+        window->close();
+    }
+}
+
+void gui::drawGame(sf::RenderWindow *window) {
+    window->clear(sf::Color(150, 220, 255));
+    drawMap(window);
+    drawResources(window);
+    drawEggs(window);
+    drawPlayers(window);
+    drawPopMessages(window);
+    drawTopBar(window);
 }
 
 void gui::drawMap(sf::RenderWindow *window) {

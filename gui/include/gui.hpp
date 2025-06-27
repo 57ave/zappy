@@ -39,6 +39,8 @@ class gui {
         int windowSizeX;
         int windowSizeY;
         bool menu = true;
+        bool endGame = false;
+        std::string winnerTeam;
         sf::RenderWindow window;
         sf::Font font;
         float isoOffsetX = 0.0f;
@@ -74,9 +76,12 @@ class gui {
         void parse_pbc(const std::string &message);
         void parse_pdi(const std::string &message);
         void parse_pex(const std::string &message);
+        void parse_seg(const std::string &message);
 
         void parse_server_data(const std::string &data);
         void drawMenu(sf::RenderWindow *window);
+        void drawEndGame(sf::RenderWindow *window);
+        void drawGame(sf::RenderWindow *window);
         void drawMap(sf::RenderWindow *window);
         void drawTopBar(sf::RenderWindow *window);
         void drawPlayers(sf::RenderWindow *window);
