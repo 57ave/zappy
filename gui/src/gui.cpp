@@ -99,10 +99,10 @@ int gui::run() {
             drawMap(&window);
             drawResources(&window);
             drawPlayers(&window);
+            drawPopMessages(&window);
             drawTopBar(&window);
             window.display();
         }
-        
     }
     return 0;
 }
@@ -247,7 +247,7 @@ void gui::drawPlayers(sf::RenderWindow *window) {
     float originX = (window->getSize().x - mapWidthPx) / 2.0f + isoOffsetX;
     float originY = (window->getSize().y - mapHeightPx) / 2.0f + isoOffsetY;
 
-    for (const auto& player : players) {
+    for (auto& player : players) {
         int x = player.getX();
         int y = player.getY();
         int orientation = player.getDirection();
@@ -266,12 +266,15 @@ void gui::drawPlayers(sf::RenderWindow *window) {
             sprite.setTextureRect(sf::IntRect(0 * 32, 8 * 32, 32, 32));
         }
         sprite.setScale(tileWidth / 32.0f, tileHeight / 32.0f);
-
         float posX = originX + x * tileWidth;
         float posY = originY + y * tileHeight;
-
         sprite.setPosition(posX, posY);
         window->draw(sprite);
+
+        if (player.animation == true) {
+            addPopMessage(player.animationMessage);
+            player.animation = false;
+        }
     }
 }
 
@@ -333,5 +336,43 @@ void gui::drawResources(sf::RenderWindow *window) {
                 }
             }
         }
+    }
+}
+
+void gui::addPopMessage(const std::string& msg) {
+    popMessages.push_back({msg, sf::Clock()});
+}
+
+void gui::drawPopMessages(sf::RenderWindow *window) {
+    float padding = 10.f;
+    float margin = 20.f;
+    float messageSpacing = 8.f;
+    float y = window->getSize().y - margin;
+
+    while (!popMessages.empty() && popMessages.front().clock.getElapsedTime().asSeconds() > 1.0f) {
+        popMessages.pop_front();
+    }
+
+    for (auto it = popMessages.rbegin(); it != popMessages.rend(); ++it) {
+        sf::Text popMessage(it->text, font, 30);
+        popMessage.setFillColor(sf::Color::White);
+
+        sf::FloatRect textBounds = popMessage.getLocalBounds();
+        float boxWidth = textBounds.width + 2 * padding;
+        float boxHeight = textBounds.height + 2 * padding;
+
+        float boxX = window->getSize().x - boxWidth - margin;
+        y -= boxHeight;
+
+        sf::RectangleShape popMessageBox(sf::Vector2f(boxWidth, boxHeight));
+        popMessageBox.setFillColor(sf::Color(0, 0, 0, 180));
+        popMessageBox.setPosition(boxX, y);
+
+        popMessage.setPosition(boxX + padding, y + padding - textBounds.top);
+
+        window->draw(popMessageBox);
+        window->draw(popMessage);
+
+        y -= messageSpacing;
     }
 }

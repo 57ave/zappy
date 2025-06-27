@@ -10,6 +10,10 @@
 #include <unordered_map>
 #include <functional>
 
+static std::string resourceNames[] = {
+    "food", "linemate", "deraumere", "sibur", "mendiane", "phiras", "thystame"
+};
+
 void gui::parse_msz(const std::string &message) {
     std::istringstream iss(message);
     std::string msz;
@@ -118,6 +122,36 @@ void gui::parse_sst(const std::string &message) {
     timeGame = time;
 }
 
+void gui::parse_pgt(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pgt;
+    int id, resourceType;
+    iss >> pgt >> id >> resourceType;
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            std::string cmd = "pin " + std::to_string(id) + "\n";
+            player.animation = true;
+            player.animationMessage = "Player " + std::to_string(id) + " is taking " + resourceNames[resourceType];
+            player.animationClock.restart();
+        }
+    }
+}
+
+void gui::parse_pdr(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pdr;
+    int id, resourceType;
+    iss >> pdr >> id >> resourceType;
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            std::string cmd = "pin " + std::to_string(id) + "\n";
+            player.animation = true;
+            player.animationMessage = "Player " + std::to_string(id) + " is dropping " + resourceNames[resourceType];
+            player.animationClock.restart();
+        }
+    }
+}
+
 void gui::parse_server_data(const std::string &message) {
     std::string type = message.substr(0, 3);
 
@@ -130,7 +164,9 @@ void gui::parse_server_data(const std::string &message) {
         {"plv", &gui::parse_plv},
         {"pin", &gui::parse_pin},
         {"sgt", &gui::parse_sgt},
-        {"sst", &gui::parse_sst}
+        {"sst", &gui::parse_sst},
+        {"pgt", &gui::parse_pgt},
+        {"pdr", &gui::parse_pdr}
     };
 
     auto it = cmd.find(type);
