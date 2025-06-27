@@ -1,4 +1,9 @@
-.PHONY: all build run clean
+##
+## EPITECH PROJECT, 2025
+## Zappy Server Makefile
+## File description:
+## Makefile
+##
 
 all: build
 
@@ -10,3 +15,5 @@ run:
 
 clean:
 	cargo clean
+
+.PHONY: all build run clean
