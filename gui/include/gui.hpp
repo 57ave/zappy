@@ -77,6 +77,9 @@ class gui {
         void parse_pdi(const std::string &message);
         void parse_pex(const std::string &message);
         void parse_seg(const std::string &message);
+        void parse_smg(const std::string &message);
+        void parse_suc(const std::string &message);
+        void parse_sbp(const std::string &message);
 
         void parse_server_data(const std::string &data);
         void drawMenu(sf::RenderWindow *window);
