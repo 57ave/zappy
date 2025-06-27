@@ -33,6 +33,8 @@ SRC	=	src/server.c    \
 		src/tick.c	\
 		src/connection.c	\
 		src/process_client.c	\
+		src/response.c	\
+		src/new_pos.c	\
 
 OBJ	=	$(SRC:.c=.o)
 
