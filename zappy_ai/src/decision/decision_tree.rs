@@ -23,7 +23,6 @@ pub struct ResourceNode {
 }
 
 pub struct LevelUpNode {
-    level_requirements: Vec<(String, u32)>,
     next: Option<Box<DecisionNodeEnum>>,
 }
 
@@ -42,7 +41,7 @@ impl DecisionNode for DecisionNodeEnum {
 impl DecisionNode for FoodNode {
     async fn evaluate(&self, client: &mut ZappyClient) -> (Priority, Action) {
         match client.see_food().await {
-            Ok(food_count) if food_count < self.food_threshold => (Priority::Critical, Action::FindFood),
+            Ok(food_count) if food_count < self.food_threshold => (Priority::High, Action::FindFood),
             Ok(_) => {
                 if let Some(next) = &self.next {
                     next.evaluate(client).await
@@ -62,10 +61,13 @@ impl DecisionNode for FoodNode {
 impl DecisionNode for ResourceNode {
     async fn evaluate(&self, client: &mut ZappyClient) -> (Priority, Action) {
         let _inventory = client.inventory().await.unwrap();
+        if let Ok(true) = client.see_priority_resource().await {
+            return (Priority::High, Action::CollectResource);
+        }
         if let Some(next) = &self.next {
             next.evaluate(client).await
         } else {
-            (Priority::Low, Action::CollectResource)
+            (Priority::Low, Action::LayEgg)
         }
     }
 }
@@ -73,17 +75,15 @@ impl DecisionNode for ResourceNode {
 #[async_trait]
 impl DecisionNode for LevelUpNode {
     async fn evaluate(&self, client: &mut ZappyClient) -> (Priority, Action) {
-        let inventory = client.inventory().await.unwrap();
-        let can_level_up = self.level_requirements.iter()
-            .all(|(resource, amount)| inventory.get_resource(resource) >= *amount as i32);
-        if can_level_up {
-            return (Priority::High, Action::LevelUp);
-        }
-        
-        if let Some(next) = &self.next {
-            next.evaluate(client).await
-        } else {
-            (Priority::Medium, Action::CollectResource)
+        match client.has_level_requirements().await {
+            Ok(true) => (Priority::High, Action::LevelUp),
+            Ok(false) => {
+                (Priority::High, Action::CollectResource)
+            }
+            Err(e) => {
+                eprintln!("Error checking level requirements: {:?}", e);
+                (Priority::Low, Action::LayEgg)
+            }
         }
     }
 }
@@ -91,11 +91,6 @@ impl DecisionNode for LevelUpNode {
 impl DecisionTree {
     pub fn new() -> Self {
         let level_node = DecisionNodeEnum::LevelUp(LevelUpNode {
-            level_requirements: vec![
-                ("linemate".to_string(), 1),
-                ("deraumere".to_string(), 1),
-                ("sibur".to_string(), 1),
-            ],
             next: None,
         });
         let resource_node = DecisionNodeEnum::Resource(ResourceNode {
@@ -108,7 +103,7 @@ impl DecisionTree {
             next: Some(Box::new(level_node)),
         });
         let food_node = DecisionNodeEnum::Food(FoodNode {
-            food_threshold: 3,  // Seuil critique de nourriture
+            food_threshold: 3,  // Critical food level
             next: Some(Box::new(resource_node)),
         });
         DecisionTree {

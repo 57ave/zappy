@@ -39,7 +39,6 @@ impl From<io::Error> for ClientError {
     }
 }
 
-// Méthodes utilitaires pour créer des erreurs
 impl ClientError {
     pub fn invalid_response(msg: impl Into<String>) -> Self {
         ClientError::InvalidResponse(msg.into())
