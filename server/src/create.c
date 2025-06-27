@@ -16,7 +16,6 @@ char *create_resource_info(int resource_index, int quantity)
     
     if (!resource_info)
         return NULL;
-    
     snprintf(resource_info, needed_size, "%s %d", resource_name, quantity);
     return resource_info;
 }
@@ -26,14 +25,11 @@ bool add_single_resource(tile_t *tile, char *tile_content, bool *first_item, int
     char *resource_info;
     if (tile->resources[r] <= 0)
         return true;
-    
     if (!*first_item)
         strcat(tile_content, " ");
-    
     resource_info = create_resource_info(r, tile->resources[r]);
     if (!resource_info)
         return false;
-    
     strcat(tile_content, resource_info);
     free(resource_info);
     *first_item = false;
