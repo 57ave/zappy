@@ -10,14 +10,16 @@
 
 bool process_single_tile(process_context_t *ctx, look_params_t params)
 {
-    position_t pos = calculate_look_coordinates(ctx->player,
-        ctx->server, params);
+    position_t pos =
+        calculate_look_coordinates(ctx->player, ctx->server, params);
     tile_context_t tile_ctx = {ctx->server, pos};
+    char tile_content[256] = {0};
 
-    if (!add_tile_resources(&tile_ctx, ctx->resp_ctx))
+    if (!build_tile_content(&tile_ctx, tile_content, sizeof(tile_content)))
         return false;
-    if (!add_tile_players(&tile_ctx, ctx->resp_ctx))
+    if (!add_tile_to_response(ctx->resp_ctx, tile_content))
         return false;
+    *(ctx->resp_ctx->first_tile) = false;
     return true;
 }
 

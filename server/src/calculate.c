@@ -15,7 +15,10 @@ char *create_tile_content(tile_context_t *ctx)
 
     if (!tile_content)
         return NULL;
-    build_tile_content(ctx->server, ctx->pos, tile_content);
+    if (!build_tile_content(ctx, tile_content, needed_size)) {
+        free(tile_content);
+        return NULL;
+    }
     return tile_content;
 }
 

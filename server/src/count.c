@@ -42,13 +42,44 @@ size_t calculate_tile_content_size(tile_context_t *ctx)
     return size;
 }
 
-void build_tile_content(server_t *server, position_t pos, char *tile_content)
+static void append_tile_resources(tile_t *tile, char *tile_str,
+    size_t size)
 {
-    tile_t *tile = &server->map->tiles[pos.y][pos.x];
-    bool first_item = true;
+    char buffer[64];
+
+    for (int r = 0; r < RESOURCE_COUNT; r++) {
+        if (tile->resources[r] > 0) {
+            snprintf(buffer, sizeof(buffer), "%s %d ",
+                get_resource_name(r), tile->resources[r]);
+            strncat(tile_str, buffer, size - strlen(tile_str) - 1);
+        }
+    }
+}
+
+static void append_tile_players(server_t *server, position_t pos,
+    char *tile_str, size_t size)
+{
+    char buffer[64];
     int player_count = count_players_on_tile(server, pos.x, pos.y);
 
-    strcpy(tile_content, "");
-    add_resources_to_tile_content(tile, tile_content, &first_item);
-    add_players_to_tile_content(player_count, tile_content, &first_item);
+    if (player_count > 0) {
+        snprintf(buffer, sizeof(buffer), "player %d ", player_count);
+        strncat(tile_str, buffer, size - strlen(tile_str) - 1);
+    }
+}
+
+bool build_tile_content(tile_context_t *tile_ctx, char *tile_str,
+    size_t size)
+{
+    tile_t *tile =
+        &tile_ctx->server->map->tiles[tile_ctx->pos.y][tile_ctx->pos.x];
+    size_t len = 0;
+
+    tile_str[0] = '\0';
+    append_tile_resources(tile, tile_str, size);
+    append_tile_players(tile_ctx->server, tile_ctx->pos, tile_str, size);
+    len = strlen(tile_str);
+    if (len > 0 && tile_str[len - 1] == ' ')
+        tile_str[len - 1] = '\0';
+    return true;
 }

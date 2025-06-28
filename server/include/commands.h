@@ -79,7 +79,8 @@ int count_players_on_tile(server_t *server, int x, int y);
 position_t calculate_look_coordinates(player_t *player, server_t *server,
     look_params_t params);
 char *create_tile_content(tile_context_t *ctx);
-void build_tile_content(server_t *server, position_t pos, char *tile_content);
+bool build_tile_content(tile_context_t *tile_ctx, char *tile_str,
+    size_t max_size);
 void add_players_to_tile_content(int player_count, char *tile_content,
     bool *first_item);
 void add_resources_to_tile_content(tile_t *tile, char *tile_content,
