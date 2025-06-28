@@ -49,7 +49,7 @@ void cmd_broadcast(server_t *server, player_t *player, char *args)
                 args);
         }
         if (server->gui_fd != -1)
-            dprintf(server->gui_fd, "pbc #%d %s\n", player->id, args);
+            dprintf(server->gui_fd, "pbc %d %s\n", player->id, args);
     }
     dprintf(player->fd, "ok\n");
 }
@@ -75,7 +75,7 @@ void cmd_fork(server_t *server, player_t *player)
         team->eggs_available++;
         dprintf(player->fd, "ok\n");
         if (server->gui_fd != -1)
-            dprintf(server->gui_fd, "pfk #%d\n", player->id);
+            dprintf(server->gui_fd, "pfk %d\n", player->id);
     } else {
         dprintf(player->fd, "ko\n");
     }

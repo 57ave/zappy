@@ -52,7 +52,7 @@ const char *get_resource_name(resource_type_t type)
 static void send_forward_response(server_t *server, player_t *player)
 {
     dprintf(player->fd, "ok\n");
-    dprintf(server->gui_fd, "ppo #%d %d %d %d\n",
+    dprintf(server->gui_fd, "ppo %d %d %d %d\n",
             player->id, player->x, player->y, player->dir + 1);
 }
 
@@ -84,12 +84,12 @@ void cmd_right(server_t *s, player_t *p)
 {
     p->dir = (p->dir + 1) % 4;
     dprintf(p->fd, "ok\n");
-    dprintf(s->gui_fd, "ppo #%d %d %d %d\n", p->id, p->x, p->y, p->dir + 1);
+    dprintf(s->gui_fd, "ppo %d %d %d %d\n", p->id, p->x, p->y, p->dir + 1);
 }
 
 void cmd_left(server_t *s, player_t *p)
 {
     p->dir = (p->dir - 1 + 4) % 4;
     dprintf(p->fd, "ok\n");
-    dprintf(s->gui_fd, "ppo #%d %d %d %d\n", p->id, p->x, p->y, p->dir + 1);
+    dprintf(s->gui_fd, "ppo %d %d %d %d\n", p->id, p->x, p->y, p->dir + 1);
 }

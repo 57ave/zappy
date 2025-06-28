@@ -67,8 +67,8 @@ static void send_gui_pgt(server_t *server, player_t *player,
 
     if (server->gui_fd == -1)
         return;
-    dprintf(server->gui_fd, "pgt #%d %d\n", player->id, res);
-    dprintf(server->gui_fd, "pin #%d %d %d %d %d %d %d %d %d %d\n",
+    dprintf(server->gui_fd, "pgt %d %d\n", player->id, res);
+    dprintf(server->gui_fd, "pin %d %d %d %d %d %d %d %d %d %d\n",
         player->id, player->x, player->y,
         player->inventory[FOOD], player->inventory[LINEMATE],
         player->inventory[DERAUMERE], player->inventory[SIBUR],
@@ -107,8 +107,8 @@ static void send_gui_pdr(server_t *server, player_t *player,
 
     if (server->gui_fd == -1)
         return;
-    dprintf(server->gui_fd, "pdr #%d %d\n", player->id, res);
-    dprintf(server->gui_fd, "pin #%d %d %d %d %d %d %d %d %d %d\n",
+    dprintf(server->gui_fd, "pdr %d %d\n", player->id, res);
+    dprintf(server->gui_fd, "pin %d %d %d %d %d %d %d %d %d %d\n",
         player->id, player->x, player->y,
         player->inventory[FOOD], player->inventory[LINEMATE],
         player->inventory[DERAUMERE], player->inventory[SIBUR],
