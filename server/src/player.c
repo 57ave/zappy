@@ -23,7 +23,7 @@ player_t *create_player(int id, int fd, const char *team, map_t *map)
     player->id = id;
     player->fd = fd;
     player->lvl = 1;
-    player->direction = rand() % 4;
+    player->dir = rand() % 4;
     player->x = rand() % map->width;
     player->y = rand() % map->height;
     memset(player->inventory, 0, sizeof(player->inventory));

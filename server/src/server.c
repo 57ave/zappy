@@ -23,6 +23,7 @@ void create_server(server_t *server)
     server->addr.sin_addr.s_addr = htonl(INADDR_ANY);
     server->game_started = false;
     server->pfds[0].fd = server->fd;
+    server->gui_fd = -1;
     for (int i = 1; i < NB_CONNECTION; i++) {
         server->pfds[i].fd = FD_NULL;
         server->pfds[i].events = POLLIN;

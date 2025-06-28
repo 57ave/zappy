@@ -59,8 +59,8 @@ typedef struct {
 } process_context_t;
 
 void cmd_forward(server_t *server, player_t *player);
-void cmd_right(player_t *player);
-void cmd_left(player_t *player);
+void cmd_right(server_t *serv, player_t *player);
+void cmd_left(server_t *serv, player_t *player);
 void cmd_look(server_t *server, player_t *player);
 void cmd_inventory(player_t *player);
 void cmd_broadcast(server_t *server, player_t *player, char *args);

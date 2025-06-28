@@ -71,6 +71,7 @@ void handle_team_command(server_t *server, server_config_t *config,
 void handle_graphic_client_registration(server_t *server, int i)
 {
     server->clients[i].type = CLIENT_GUI;
+    server->gui_fd = server->pfds[i].fd;
     write(server->pfds[i].fd, "WELCOME\n", 8);
     printf("Client %d registered as GUI\n", i);
 }

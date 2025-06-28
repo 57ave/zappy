@@ -8,10 +8,9 @@
 #include "commands.h"
 #include "server.h"
 
-void cmd_incantation(server_t *server, player_t *player)
+void cmd_incantation(server_t *server, player_t *p)
 {
-    (void)server;
-    player->lvl++;
-    dprintf(player->fd, "Elevation underway\nCurrent level: %d\n",
-        player->lvl);
+    p->lvl++;
+    dprintf(p->fd, "Elevation underway\nCurrent level: %d\n", p->lvl);
+    dprintf(server->gui_fd, "pic %d %d %d #%d\n", p->x, p->y, p->lvl, p->id);
 }

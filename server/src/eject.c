@@ -12,7 +12,7 @@ position_t calculate_ejection_position(player_t *ejector, server_t *server)
 {
     position_t pos = {ejector->x, ejector->y};
 
-    switch (ejector->direction) {
+    switch (ejector->dir) {
         case UP:
             pos.y = (pos.y - 1 + server->map->height) % server->map->height;
             break;
@@ -41,7 +41,10 @@ bool eject_player_from_tile(server_t *server, player_t *ejector,
     new_pos = calculate_ejection_position(ejector, server);
     target->x = new_pos.x;
     target->y = new_pos.y;
-    dprintf(target->fd, "eject: %d\n", (ejector->direction + 2) % 4);
+    dprintf(target->fd, "eject: %d\n", (ejector->dir + 2) % 4);
+    dprintf(server->gui_fd, "pex #%d\n", ejector->id);
+    dprintf(server->gui_fd, "ppo #%d %d %d %d\n", 
+            target->id, target->x, target->y, target->dir);
     return true;
 }
 
@@ -57,6 +60,27 @@ void cmd_eject(server_t *server, player_t *player)
     dprintf(player->fd, ejected_someone ? "ok\n" : "ko\n");
 }
 
+static void send_gui_pgt(server_t *server, player_t *player, resource_type_t res)
+{
+    tile_t *tile = &server->map->tiles[player->y][player->x];
+
+    if (server->gui_fd == -1)
+        return;
+    dprintf(server->gui_fd, "pgt #%d %d\n", player->id, res);
+    dprintf(server->gui_fd, "pin #%d %d %d %d %d %d %d %d %d %d\n",
+        player->id, player->x, player->y,
+        player->inventory[FOOD], player->inventory[LINEMATE],
+        player->inventory[DERAUMERE], player->inventory[SIBUR],
+        player->inventory[MENDIANE], player->inventory[PHIRAS],
+        player->inventory[THYSTAME]);
+    dprintf(server->gui_fd, "bct %d %d %d %d %d %d %d %d %d\n",
+        player->x, player->y,
+        tile->resources[FOOD], tile->resources[LINEMATE],
+        tile->resources[DERAUMERE], tile->resources[SIBUR],
+        tile->resources[MENDIANE], tile->resources[PHIRAS],
+        tile->resources[THYSTAME]);
+}
+
 void cmd_take(server_t *server, player_t *player, char *args)
 {
     resource_type_t resource = get_resource_type(args);
@@ -70,8 +94,30 @@ void cmd_take(server_t *server, player_t *player, char *args)
         tile->resources[resource]--;
         player->inventory[resource]++;
         dprintf(player->fd, "ok\n");
+        send_gui_pgt(server, player, resource);
     }
     dprintf(player->fd, "ko\n");
+}
+
+static void send_gui_pdr(server_t *server, player_t *player, resource_type_t res)
+{
+    tile_t *tile = &server->map->tiles[player->y][player->x];
+
+    if (server->gui_fd == -1)
+        return;
+    dprintf(server->gui_fd, "pdr #%d %d\n", player->id, res);
+    dprintf(server->gui_fd, "pin #%d %d %d %d %d %d %d %d %d %d\n",
+        player->id, player->x, player->y,
+        player->inventory[FOOD], player->inventory[LINEMATE],
+        player->inventory[DERAUMERE], player->inventory[SIBUR],
+        player->inventory[MENDIANE], player->inventory[PHIRAS],
+        player->inventory[THYSTAME]);
+    dprintf(server->gui_fd, "bct %d %d %d %d %d %d %d %d %d\n",
+        player->x, player->y,
+        tile->resources[FOOD], tile->resources[LINEMATE],
+        tile->resources[DERAUMERE], tile->resources[SIBUR],
+        tile->resources[MENDIANE], tile->resources[PHIRAS],
+        tile->resources[THYSTAME]);
 }
 
 void cmd_set(server_t *server, player_t *player, char *args)
@@ -86,6 +132,7 @@ void cmd_set(server_t *server, player_t *player, char *args)
         player->inventory[resource]--;
         server->map->tiles[player->y][player->x].resources[resource]++;
         dprintf(player->fd, "ok\n");
+        send_gui_pdr(server, player, resource);
     } else {
         dprintf(player->fd, "ko\n");
     }

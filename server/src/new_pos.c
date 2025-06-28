@@ -51,13 +51,13 @@ static position_t calculate_position_left(player_t *player, server_t *server,
 position_t calculate_look_coordinates(player_t *player, server_t *server,
     look_params_t params)
 {
-    if (player->direction == UP)
+    if (player->dir == UP)
         return calculate_position_up(player, server, params);
-    if (player->direction == RIGHT)
+    if (player->dir == RIGHT)
         return calculate_position_right(player, server, params);
-    if (player->direction == DOWN)
+    if (player->dir == DOWN)
         return calculate_position_down(player, server, params);
-    if (player->direction == LEFT)
+    if (player->dir == LEFT)
         return calculate_position_left(player, server, params);
     return (position_t){0, 0};
 }

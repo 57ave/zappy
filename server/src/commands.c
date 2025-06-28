@@ -49,38 +49,41 @@ const char *get_resource_name(resource_type_t type)
     }
 }
 
-void cmd_forward(server_t *serv, player_t *player)
+void cmd_forward(server_t *s, player_t *p)
 {
-    int new_x = player->x;
-    int new_y = player->y;
+    int new_x = p->x;
+    int new_y = p->y;
 
-    switch (player->direction) {
+    switch (p->dir) {
         case UP:
-            new_y = (player->y - 1 + serv->map->height) % serv->map->height;
+            new_y = (p->y - 1 + s->map->height) % s->map->height;
             break;
         case RIGHT:
-            new_x = (player->x + 1) % serv->map->width;
+            new_x = (p->x + 1) % s->map->width;
             break;
         case DOWN:
-            new_y = (player->y + 1) % serv->map->height;
+            new_y = (p->y + 1) % s->map->height;
             break;
         case LEFT:
-            new_x = (player->x - 1 + serv->map->width) % serv->map->width;
+            new_x = (p->x - 1 + s->map->width) % s->map->width;
             break;
     }
-    player->x = new_x;
-    player->y = new_y;
-    dprintf(player->fd, "ok\n");
+    p->x = new_x;
+    p->y = new_y;
+    dprintf(p->fd, "ok\n");
+    dprintf(s->gui_fd, "ppo #%d %d %d %d\n", p->id, p->x, p->y, p->dir + 1);
 }
 
-void cmd_right(player_t *player)
+void cmd_right(server_t *s, player_t *p)
 {
-    player->direction = (player->direction + 1) % 4;
-    dprintf(player->fd, "ok\n");
+    p->dir = (p->dir + 1) % 4;
+    dprintf(p->fd, "ok\n");
+    dprintf(s->gui_fd, "ppo #%d %d %d %d\n", p->id, p->x, p->y, p->dir + 1);
 }
 
-void cmd_left(player_t *player)
+void cmd_left(server_t *s, player_t *p)
 {
-    player->direction = (player->direction - 1 + 4) % 4;
-    dprintf(player->fd, "ok\n");
+    p->dir = (p->dir - 1 + 4) % 4;
+    dprintf(p->fd, "ok\n");
+    dprintf(s->gui_fd, "ppo #%d %d %d %d\n", p->id, p->x, p->y, p->dir + 1);
 }

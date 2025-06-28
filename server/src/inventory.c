@@ -27,15 +27,15 @@ char *build_inventory_response(player_t *player)
     return response;
 }
 
-void cmd_inventory(player_t *player)
+void cmd_inventory(player_t *p)
 {
-    char *response = build_inventory_response(player);
+    char *response = build_inventory_response(p);
 
     if (!response) {
-        dprintf(player->fd, "ko\n");
+        dprintf(p->fd, "ko\n");
         return;
     }
-    dprintf(player->fd, "%s\n", response);
+    dprintf(p->fd, "%s\n", response);
     free(response);
 }
 
@@ -48,6 +48,8 @@ void cmd_broadcast(server_t *server, player_t *player, char *args)
             dprintf(server->players[i]->fd, "message %d,%s\n", direction,
                 args);
         }
+        if (server->gui_fd != -1)
+            dprintf(server->gui_fd, "pbc #%d %s\n", player->id, args);
     }
     dprintf(player->fd, "ok\n");
 }
@@ -72,6 +74,9 @@ void cmd_fork(server_t *server, player_t *player)
     if (team) {
         team->eggs_available++;
         dprintf(player->fd, "ok\n");
+        if (server->gui_fd != -1)
+            dprintf(server->gui_fd, "pfk #%d\n", player->id);
+    } else {
+        dprintf(player->fd, "ko\n");
     }
-    dprintf(player->fd, "ko\n");
 }

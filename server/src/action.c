@@ -33,9 +33,9 @@ void execute_movement_and_info_commands(server_t *server, player_t *player,
     if (strcmp(cmd_name, "Forward") == 0)
         cmd_forward(server, player);
     if (strcmp(cmd_name, "Right") == 0)
-        cmd_right(player);
+        cmd_right(server, player);
     if (strcmp(cmd_name, "Left") == 0)
-        cmd_left(player);
+        cmd_left(server, player);
     if (strcmp(cmd_name, "Look") == 0)
         cmd_look(server, player);
     if (strcmp(cmd_name, "Inventory") == 0)
