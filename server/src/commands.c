@@ -49,6 +49,13 @@ const char *get_resource_name(resource_type_t type)
     }
 }
 
+static void send_forward_response(server_t *server, player_t *player)
+{
+    dprintf(player->fd, "ok\n");
+    dprintf(server->gui_fd, "ppo #%d %d %d %d\n",
+            player->id, player->x, player->y, player->dir + 1);
+}
+
 void cmd_forward(server_t *s, player_t *p)
 {
     int new_x = p->x;
@@ -70,8 +77,7 @@ void cmd_forward(server_t *s, player_t *p)
     }
     p->x = new_x;
     p->y = new_y;
-    dprintf(p->fd, "ok\n");
-    dprintf(s->gui_fd, "ppo #%d %d %d %d\n", p->id, p->x, p->y, p->dir + 1);
+    send_forward_response(s, p);
 }
 
 void cmd_right(server_t *s, player_t *p)

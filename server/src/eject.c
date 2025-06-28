@@ -43,7 +43,7 @@ bool eject_player_from_tile(server_t *server, player_t *ejector,
     target->y = new_pos.y;
     dprintf(target->fd, "eject: %d\n", (ejector->dir + 2) % 4);
     dprintf(server->gui_fd, "pex #%d\n", ejector->id);
-    dprintf(server->gui_fd, "ppo #%d %d %d %d\n", 
+    dprintf(server->gui_fd, "ppo #%d %d %d %d\n",
             target->id, target->x, target->y, target->dir);
     return true;
 }
@@ -60,7 +60,8 @@ void cmd_eject(server_t *server, player_t *player)
     dprintf(player->fd, ejected_someone ? "ok\n" : "ko\n");
 }
 
-static void send_gui_pgt(server_t *server, player_t *player, resource_type_t res)
+static void send_gui_pgt(server_t *server, player_t *player,
+    resource_type_t res)
 {
     tile_t *tile = &server->map->tiles[player->y][player->x];
 
@@ -99,7 +100,8 @@ void cmd_take(server_t *server, player_t *player, char *args)
     dprintf(player->fd, "ko\n");
 }
 
-static void send_gui_pdr(server_t *server, player_t *player, resource_type_t res)
+static void send_gui_pdr(server_t *server, player_t *player,
+    resource_type_t res)
 {
     tile_t *tile = &server->map->tiles[player->y][player->x];
 

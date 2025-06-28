@@ -24,17 +24,17 @@
     #define SUCCESS 0
     #define FAILURE 84
 
-    typedef struct {
-        int port;
-        int width;
-        int height;
-        char **team_name;
-        int team_nb;
-        int nb_clients;
-        int freq;
-        int tick_freq;
-        team_t *teams;
-    } server_config_t;
+typedef struct {
+    int port;
+    int width;
+    int height;
+    char **team_name;
+    int team_nb;
+    int nb_clients;
+    int freq;
+    int tick_freq;
+    team_t *teams;
+} server_config_t;
 
 typedef struct {
     int fd;

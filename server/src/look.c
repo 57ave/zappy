@@ -67,4 +67,3 @@ void cmd_look(server_t *server, player_t *player)
     dprintf(player->fd, "%s\n", response);
     free(response);
 }
-

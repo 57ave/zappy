@@ -63,9 +63,10 @@ static void send_teams_to_gui(int gui_fd, server_config_t *config)
 
 void send_gui(server_t *serv, const char *format, ...)
 {
+    va_list args;
+
     if (serv->gui_fd == -1)
         return;
-    va_list args;
     va_start(args, format);
     vdprintf(serv->gui_fd, format, args);
     va_end(args);
