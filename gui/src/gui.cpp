@@ -244,21 +244,23 @@ void gui::drawTopBar(sf::RenderWindow *window) {
                 moreInfoBox.setFillColor(sf::Color(200, 200, 200, 200));
                 moreInfoBox.setPosition(20, 82);
                 window->draw(moreInfoBox);
+                int playerIndex = 0;
                 for (const auto& player : players) {
                     if (player.getTeam() == teams[i]) {
                         sf::Text playerInfo("Id: " + std::to_string(player.getId()) +
-                           " Lvl: " + std::to_string(player.getLevel()) +
-                           " Loc: x = " + std::to_string(player.getX()) +
-                           ", y = " + std::to_string(player.getY()) + "\n" , font, 20);
+                            " Lvl: " + std::to_string(player.getLevel()) +
+                            " Loc: x = " + std::to_string(player.getX()) +
+                            ", y = " + std::to_string(player.getY()) + "\n" , font, 20);
                         const auto& inv = player.getInventory();
                         std::string invStr = "Inv: food(" + std::to_string(inv[0]) + ") linemate(" + std::to_string(inv[1]) +
                             ") deraumere(" + std::to_string(inv[2]) + ")\nsibur(" + std::to_string(inv[3]) +
                             ") mendiane(" + std::to_string(inv[4]) + ") phiras(" + std::to_string(inv[5]) +
                             ") thystame(" + std::to_string(inv[6]) + ")";
                         playerInfo.setFillColor(sf::Color::Black);
-                        playerInfo.setPosition(25, 90 + 100 * (&player - &players[0]));
+                        playerInfo.setPosition(25, 90 + 100 * playerIndex);
                         playerInfo.setString(playerInfo.getString() + invStr);
                         window->draw(playerInfo);
+                        playerIndex++;
                     }
                 }
             }
@@ -326,7 +328,8 @@ void gui::drawPlayers(sf::RenderWindow *window) {
             sprite.setTextureRect(sf::IntRect(0 * 32, 6 * 32, 32, 32));
         } else if (orientation == 4) {
             sprite.setTextureRect(sf::IntRect(0 * 32, 8 * 32, 32, 32));
-        }
+        } else
+            return;
         sprite.setScale(tileWidth / 32.0f, tileHeight / 32.0f);
         float posX = originX + x * tileWidth;
         float posY = originY + y * tileHeight;
