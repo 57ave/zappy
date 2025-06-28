@@ -50,7 +50,6 @@ static void server_main_loop(server_t *server, server_config_t *config)
         process_client_messages(server, config);
         remove_disconnected_clients(server);
         handle_game_tick(server, config, &last_tick, &tick_count);
-            
     }
 }
 

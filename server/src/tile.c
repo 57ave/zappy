@@ -33,7 +33,6 @@ bool add_element_to_response(response_context_t *ctx, const char *element)
     if (!ctx->first_tile)
         strcat(ctx->response, ", ");
     strcat(ctx->response, element);
-    ctx->first_tile = false;
     return true;
 }
 
