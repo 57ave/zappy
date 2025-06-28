@@ -25,19 +25,6 @@
     #define FAILURE 84
 
 typedef struct {
-    int fd;
-    int port;
-    int nb_clients;
-    bool game_started;
-    struct sockaddr_in addr;
-    map_t *map;
-    player_t *players[MAX_PLAYERS];
-    int player_nb;
-    struct pollfd pfds[NB_CONNECTION + 1];
-    client_t clients[NB_CONNECTION + 1];
-} server_t;
-
-typedef struct {
     int port;
     int width;
     int height;
@@ -48,6 +35,21 @@ typedef struct {
     int tick_freq;
     team_t *teams;
 } server_config_t;
+
+typedef struct {
+    int fd;
+    int port;
+    int nb_clients;
+    bool game_started;
+    struct sockaddr_in addr;
+    map_t *map;
+    player_t *players[MAX_PLAYERS];
+    int player_nb;
+    struct pollfd pfds[NB_CONNECTION + 1];
+    client_t clients[NB_CONNECTION + 1];
+    server_config_t *config;
+    int gui_fd;
+} server_t;
 
 void create_server(server_t *serv);
 void handle_client(server_t *serv);
@@ -61,5 +63,17 @@ void handle_client_message(server_t *server, int i, const char *buffer,
 void send_data_gui(server_t *server, int gui_fd, server_config_t *config);
 void update_player_life(server_t *server);
 void send_gui_resource_changes(server_t *server);
-
+void read_client(server_t *server, server_config_t *config, int i);
+team_t *find_team(const char *name, server_config_t *config);
+void register_player(server_t *server, int client_index,
+    team_t *team, const char *team_name);
+int handle_tick(struct timeval *last_tick, server_config_t *config);
+void update_single_player_life(player_t *player);
+int wait_activity(server_t *server, int timeout_ms);
+void handle_game_tick(server_t *server, server_config_t *config,
+    struct timeval *last_tick, int *tick_count);
+void process_clients(server_t *server, server_config_t *config,
+    int clients_connected);
+void add_action_to_queue(player_t *player, const char *cmd, int time);
+void send_gui(server_t *serv, const char *format, ...);
 #endif /* !SERVER_H_ */
