@@ -23,21 +23,6 @@ static void process_client_messages(server_t *server, server_config_t *config)
     }
 }
 
-static int should_update_game(struct timeval *last_tick, long tick_interval)
-{
-    long elapsed;
-    struct timeval current_time;
-
-    gettimeofday(&current_time, NULL);
-    elapsed = (current_time.tv_sec - last_tick->tv_sec) * 1000000 +
-        (current_time.tv_usec - last_tick->tv_usec);
-    if (elapsed >= tick_interval) {
-        *last_tick = current_time;
-        return 1;
-    }
-    return 0;
-}
-
 static void display_server_info(server_config_t *config)
 {
     printf("Server launched: port=%d, freq=%d, teams=%d\n",
@@ -48,11 +33,11 @@ static void display_server_info(server_config_t *config)
     }
 }
 
-static void server_main_loop(server_t *server, server_config_t *config,
-    long tick_interval)
+static void server_main_loop(server_t *server, server_config_t *config)
 {
     int clients_connected;
     struct timeval last_tick;
+    int tick_count = 0;
 
     gettimeofday(&last_tick, NULL);
     while (1) {
@@ -64,18 +49,16 @@ static void server_main_loop(server_t *server, server_config_t *config,
         process_new_connections(server);
         process_client_messages(server, config);
         remove_disconnected_clients(server);
-        if (should_update_game(&last_tick, tick_interval))
-            update_game_state(server);
+        handle_game_tick(server, config, &last_tick, &tick_count);
+            
     }
 }
 
 int launch_server(server_t *server, server_config_t *config)
 {
-    long tick_interval = 1000000 / config->freq;
-
     server->config = config;
     reset_server_clients(server);
     display_server_info(config);
-    server_main_loop(server, config, tick_interval);
+    server_main_loop(server, config);
     return SUCCESS;
 }

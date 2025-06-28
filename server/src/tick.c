@@ -27,6 +27,7 @@ void handle_game_tick(server_t *server, server_config_t *config,
 {
     if (!handle_tick(last_tick, config))
         return;
+    update_game_state(server);
     update_player_life(server);
     (*tick_count)++;
     if (*tick_count >= 20) {
