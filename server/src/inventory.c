@@ -27,15 +27,24 @@ char *build_inventory_response(player_t *player)
     return response;
 }
 
-void cmd_inventory(player_t *p)
+void cmd_inventory(server_t *server, player_t *player)
 {
-    char *response = build_inventory_response(p);
+    char *response = build_inventory_response(player);
 
     if (!response) {
-        dprintf(p->fd, "ko\n");
+        dprintf(player->fd, "ko\n");
         return;
     }
-    dprintf(p->fd, "%s\n", response);
+    dprintf(player->fd, "%s\n", response);
+    send_gui(server, "pin %d %d %d %d %d %d %d %d %d %d\n",
+        player->id, player->x, player->y,
+        player->inventory[FOOD],
+        player->inventory[LINEMATE],
+        player->inventory[DERAUMERE],
+        player->inventory[SIBUR],
+        player->inventory[MENDIANE],
+        player->inventory[PHIRAS],
+        player->inventory[THYSTAME]);
     free(response);
 }
 

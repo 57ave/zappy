@@ -62,7 +62,7 @@ void cmd_forward(server_t *server, player_t *player);
 void cmd_right(server_t *serv, player_t *player);
 void cmd_left(server_t *serv, player_t *player);
 void cmd_look(server_t *server, player_t *player);
-void cmd_inventory(player_t *player);
+void cmd_inventory(server_t *server, player_t *player);
 void cmd_broadcast(server_t *server, player_t *player, char *args);
 void cmd_connect_nbr(server_t *server, player_t *player);
 void cmd_fork(server_t *server, player_t *player);

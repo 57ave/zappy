@@ -39,7 +39,7 @@ void execute_movement_and_info_commands(server_t *server, player_t *player,
     if (strcmp(cmd_name, "Look") == 0)
         cmd_look(server, player);
     if (strcmp(cmd_name, "Inventory") == 0)
-        cmd_inventory(player);
+        cmd_inventory(server, player);
     if (strcmp(cmd_name, "Broadcast") == 0)
         cmd_broadcast(server, player, (char *)safe_args);
 }
