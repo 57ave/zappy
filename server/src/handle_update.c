@@ -74,4 +74,5 @@ void handle_graphic_client_registration(server_t *server, int i)
     server->gui_fd = server->pfds[i].fd;
     write(server->pfds[i].fd, "WELCOME\n", 8);
     printf("Client %d registered as GUI\n", i);
+    send_data_gui(server, server->gui_fd, server->config);
 }
