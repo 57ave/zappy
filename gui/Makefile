@@ -25,6 +25,10 @@ CFLAGS	=	-Wall -Wextra
 
 SFMLFLAGS =	-lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 
+all:	$(NAME)
+$(NAME):	$(OBJ)
+	$(CC) $(CFLAGS) -o $(NAME) $(OBJ) $(SFMLFLAGS)
+
 check-sfml:
 	@echo "Checking for SFML dependencies..."
 	@if ! pkg-config --exists sfml-graphics; then \
@@ -42,10 +46,6 @@ install-deps-debian:
 
 install-deps-fedora:
 	sudo dnf install -y SFML-devel gtest-devel boost-devel boost-filesystem-devel boost-system-devel
-
-all:	$(NAME)
-$(NAME):	$(OBJ)
-	$(CC) $(CFLAGS) -o $(NAME) $(OBJ) $(SFMLFLAGS)
 
 clean:
 	rm -f $(OBJ)
