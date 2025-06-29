@@ -9,6 +9,7 @@
     #define PLAYER_HPP
     #include <array>
     #include <string>
+    #include <SFML/System/Clock.hpp>
 
 class Player {
     public:

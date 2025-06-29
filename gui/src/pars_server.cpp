@@ -10,6 +10,10 @@
 #include <unordered_map>
 #include <functional>
 
+static std::string resourceNames[] = {
+    "food", "linemate", "deraumere", "sibur", "mendiane", "phiras", "thystame"
+};
+
 void gui::parse_msz(const std::string &message) {
     std::istringstream iss(message);
     std::string msz;
@@ -118,6 +122,175 @@ void gui::parse_sst(const std::string &message) {
     timeGame = time;
 }
 
+void gui::parse_pgt(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pgt;
+    int id, resourceType;
+    iss >> pgt >> id >> resourceType;
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            addPopMessage("Player " + std::to_string(id) + " is taking " + resourceNames[resourceType]);
+        }
+    }
+}
+
+void gui::parse_pdr(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pdr;
+    int id, resourceType;
+    iss >> pdr >> id >> resourceType;
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            addPopMessage("Player " + std::to_string(id) + " is dropping " + resourceNames[resourceType]);
+        }
+    }
+}
+
+void gui::parse_pfk(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pfk;
+    int id;
+    iss >> pfk >> id;
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            addPopMessage("Egg laying by the player " + std::to_string(id));
+        }
+    }
+}
+
+void gui::parse_enw(const std::string &message) {
+    std::istringstream iss(message);
+    std::string enw;
+    int eggId, playerId, x, y;
+    iss >> enw >> eggId >> playerId >> x >> y;
+    eggs.push_back(Egg(eggId, playerId, x, y));
+    
+    for (auto &player : players) {
+        if (player.getId() == eggs.back().getPlayerId()) {
+            addPopMessage("Egg laying by the player " + std::to_string(eggs.back().getPlayerId()));
+        }
+    }
+    parse_pfk("pfk " + std::to_string(playerId) + "\n");
+}
+
+void gui::parse_ebo(const std::string &message) {
+    std::istringstream iss(message);
+    std::string ebo;
+    int eggId;
+    iss >> ebo >> eggId;
+    for (auto &egg : eggs) {
+        if (egg.getId() == eggId) {
+            addPopMessage("Egg " + std::to_string(eggId) + " is connected to player " + std::to_string(egg.getPlayerId()));
+            return;
+        }
+    }
+}
+
+void gui::parse_edi(const std::string &message) {
+    std::istringstream iss(message);
+    std::string edi;
+    int eggId;
+    iss >> edi >> eggId;
+    eggs.erase(std::remove_if(eggs.begin(), eggs.end(),
+        [eggId](const Egg &egg) { return egg.getId() == eggId; }), eggs.end());
+    addPopMessage("Egg " + std::to_string(eggId) + " is dead");
+}
+
+void gui::parse_pbc(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pbc;
+    int id;
+    std::string broadcastMessage;
+    iss >> pbc >> id;
+    std::getline(iss, broadcastMessage);
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            addPopMessage("Player " + std::to_string(id) + " is broadcast:\n" + broadcastMessage);
+            return;
+        }
+    }
+}
+
+void gui::parse_pdi(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pdi;
+    int id;
+    iss >> pdi >> id;
+    players.erase(std::remove_if(players.begin(), players.end(),
+        [id](const Player &player) { return player.getId() == id; }), players.end());
+    addPopMessage("Player " + std::to_string(id) + " is dead");
+}
+
+void gui::parse_pex(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pex;
+    int id;
+    iss >> pex >> id;
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            addPopMessage("Player " + std::to_string(id) + " has been ejected");
+            return;
+        }
+    }
+}
+
+void gui::parse_seg(const std::string &message) {
+    std::istringstream iss(message);
+    std::string seg;
+    int id;
+    iss >> seg >> id;
+    for (auto &player : players) {
+        if (player.getId() == id) {
+            winnerTeam = player.getTeam();
+            endGame = true;
+            return;
+        }
+    }
+}
+
+void gui::parse_smg(const std::string &message) {
+    std::istringstream iss(message);
+    std::string smg;
+    std::string msg;
+    iss >> smg;
+    std::getline(iss, msg);
+    addPopMessage("Server: " + msg);
+}
+
+void gui::parse_suc(const std::string &message) {
+    addPopMessage("Unknown command");
+}
+
+void gui::parse_sbp(const std::string &message) {
+    addPopMessage("Command parameter");
+}
+
+void gui::parse_pic(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pic;
+    int x, y, playerLvl, idPlayer1;
+    iss >> pic >> x >> y >> playerLvl >> idPlayer1;
+    std::vector<int> playerIds;
+    int id;
+    while (iss >> id) {
+        playerIds.push_back(id);
+    }
+    addPopMessage("Player " + std::to_string(idPlayer1) + " start an incantation");
+}
+
+void gui::parse_pie(const std::string &message) {
+    std::istringstream iss(message);
+    std::string pie;
+    int x, y;
+    std::string result;
+    iss >> pie >> x >> y >> result;
+    if (result == "ko") {
+        addPopMessage("Incantation failed");
+    } else {
+        addPopMessage("Incantation succeeded");
+    }
+}
+
 void gui::parse_server_data(const std::string &message) {
     std::string type = message.substr(0, 3);
 
@@ -130,7 +303,22 @@ void gui::parse_server_data(const std::string &message) {
         {"plv", &gui::parse_plv},
         {"pin", &gui::parse_pin},
         {"sgt", &gui::parse_sgt},
-        {"sst", &gui::parse_sst}
+        {"sst", &gui::parse_sst},
+        {"pgt", &gui::parse_pgt},
+        {"pdr", &gui::parse_pdr},
+        {"pfk", &gui::parse_pfk},
+        {"enw", &gui::parse_enw},
+        {"ebo", &gui::parse_ebo},
+        {"edi", &gui::parse_edi},
+        {"pbc", &gui::parse_pbc},
+        {"pic", &gui::parse_pic},
+        {"pie", &gui::parse_pie},
+        {"pdi", &gui::parse_pdi},
+        {"pex", &gui::parse_pex},
+        {"seg", &gui::parse_seg},
+        {"smg", &gui::parse_smg},
+        {"suc", &gui::parse_suc},
+        {"sbp", &gui::parse_sbp}
     };
 
     auto it = cmd.find(type);

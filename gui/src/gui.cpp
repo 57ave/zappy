@@ -15,10 +15,18 @@ gui::gui() {
         std::cerr << "Erreur lors de la création de la socket" << std::endl;
     }
     menu = true;
+    endGame = false;
     serv_addr.sin_family = AF_INET;
     if (!font.loadFromFile("assets/font.ttf")) {
         std::cerr << "Erreur de chargement de la police" << std::endl;
         return;
+    }
+    if (!music.openFromFile("assets/music.ogg")) {
+        std::cerr << "Erreur de chargement de la musique" << std::endl;
+    } else {
+        music.setLoop(true);
+        music.play();
+        music.setVolume(50);
     }
 }
 
@@ -77,6 +85,7 @@ int gui::run() {
     sf::RenderWindow window(sf::VideoMode(1920, 1080), "Zappy");
     window.setFramerateLimit(60);
     sf::Event event;
+    music.play();
     while (window.isOpen()) {
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
@@ -94,15 +103,13 @@ int gui::run() {
             window.clear(sf::Color(150, 220, 255));
             drawMenu(&window);
             window.display();
+        } else if (endGame == true) {
+            drawEndGame(&window);
+            window.display();
         } else {
-            window.clear(sf::Color(150, 220, 255));
-            drawMap(&window);
-            drawResources(&window);
-            drawPlayers(&window);
-            drawTopBar(&window);
+            drawGame(&window);
             window.display();
         }
-        
     }
     return 0;
 }
@@ -131,6 +138,32 @@ void gui::drawMenu(sf::RenderWindow *window) {
     window->draw(title);
     window->draw(subtitle);
     window->draw(controls);
+}
+
+void gui::drawEndGame(sf::RenderWindow *window) {
+    window->clear(sf::Color(150, 220, 255));
+    sf::Text endText("Game Over\n", font, 50);
+    endText.setString(endText.getString() + "Winner: " + winnerTeam);
+    endText.setFillColor(sf::Color::White);
+    endText.setPosition(window->getSize().x / 2.0f - endText.getGlobalBounds().width / 2.0f, window->getSize().y / 2.0f - endText.getGlobalBounds().height / 2.0f - 50);
+    window->draw(endText);
+    sf::Text controls("Press 'Ctrl' + 'Enter' to exit", font, 30);
+    controls.setFillColor(sf::Color::White);
+    controls.setPosition(window->getSize().x / 2.0f - controls.getGlobalBounds().width / 2.0f, window->getSize().y / 2.0f + endText.getGlobalBounds().height / 2.0f + 20);
+    window->draw(controls);
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Enter) && sf::Keyboard::isKeyPressed(sf::Keyboard::LControl)) {
+        window->close();
+    }
+}
+
+void gui::drawGame(sf::RenderWindow *window) {
+    window->clear(sf::Color(150, 220, 255));
+    drawMap(window);
+    drawResources(window);
+    drawEggs(window);
+    drawPlayers(window);
+    drawPopMessages(window);
+    drawTopBar(window);
 }
 
 void gui::drawMap(sf::RenderWindow *window) {
@@ -211,25 +244,56 @@ void gui::drawTopBar(sf::RenderWindow *window) {
                 moreInfoBox.setFillColor(sf::Color(200, 200, 200, 200));
                 moreInfoBox.setPosition(20, 82);
                 window->draw(moreInfoBox);
+                int playerIndex = 0;
                 for (const auto& player : players) {
                     if (player.getTeam() == teams[i]) {
                         sf::Text playerInfo("Id: " + std::to_string(player.getId()) +
-                           " Lvl: " + std::to_string(player.getLevel()) +
-                           " Loc: x = " + std::to_string(player.getX()) +
-                           ", y = " + std::to_string(player.getY()) + "\n" , font, 20);
+                            " Lvl: " + std::to_string(player.getLevel()) +
+                            " Loc: x = " + std::to_string(player.getX()) +
+                            ", y = " + std::to_string(player.getY()) + "\n" , font, 20);
                         const auto& inv = player.getInventory();
                         std::string invStr = "Inv: food(" + std::to_string(inv[0]) + ") linemate(" + std::to_string(inv[1]) +
                             ") deraumere(" + std::to_string(inv[2]) + ")\nsibur(" + std::to_string(inv[3]) +
                             ") mendiane(" + std::to_string(inv[4]) + ") phiras(" + std::to_string(inv[5]) +
                             ") thystame(" + std::to_string(inv[6]) + ")";
                         playerInfo.setFillColor(sf::Color::Black);
-                        playerInfo.setPosition(25, 90 + 100 * (&player - &players[0]));
+                        playerInfo.setPosition(25, 90 + 100 * playerIndex);
                         playerInfo.setString(playerInfo.getString() + invStr);
                         window->draw(playerInfo);
+                        playerIndex++;
                     }
                 }
             }
         }
+    }
+}
+
+void gui::drawEggs(sf::RenderWindow *window) {
+    static sf::Texture eggTexture;
+    if (!eggTexture.loadFromFile("assets/egg.png")) {
+        std::cerr << "Erreur de chargement du sprite oeuf" << std::endl;
+        return;
+    }
+
+    float tileWidth = 64.0f * zoom;
+    float tileHeight = 64.0f * zoom;
+    float mapWidthPx = map.getWidth() * tileWidth;
+    float mapHeightPx = map.getHeight() * tileHeight;
+    float originX = (window->getSize().x - mapWidthPx) / 2.0f + isoOffsetX;
+    float originY = (window->getSize().y - mapHeightPx) / 2.0f + isoOffsetY;
+
+    float scale = tileWidth / 24.0f;
+    for (const auto& egg : eggs) {
+        sf::Sprite sprite(eggTexture);
+        sprite.setScale(scale, scale);
+
+        float spriteWidth = 16.0f * scale;
+        float spriteHeight = 16.0f * scale;
+        float posX = originX + egg.getX() * tileWidth + (tileWidth - spriteWidth) / 2.0f;
+        float posY = originY + egg.getY() * tileHeight + (tileHeight - spriteHeight) / 2.0f;
+
+        sprite.setPosition(posX, posY);
+        window->draw(sprite);
     }
 }
 
@@ -247,7 +311,7 @@ void gui::drawPlayers(sf::RenderWindow *window) {
     float originX = (window->getSize().x - mapWidthPx) / 2.0f + isoOffsetX;
     float originY = (window->getSize().y - mapHeightPx) / 2.0f + isoOffsetY;
 
-    for (const auto& player : players) {
+    for (auto& player : players) {
         int x = player.getX();
         int y = player.getY();
         int orientation = player.getDirection();
@@ -264,12 +328,11 @@ void gui::drawPlayers(sf::RenderWindow *window) {
             sprite.setTextureRect(sf::IntRect(0 * 32, 6 * 32, 32, 32));
         } else if (orientation == 4) {
             sprite.setTextureRect(sf::IntRect(0 * 32, 8 * 32, 32, 32));
-        }
+        } else
+            return;
         sprite.setScale(tileWidth / 32.0f, tileHeight / 32.0f);
-
         float posX = originX + x * tileWidth;
         float posY = originY + y * tileHeight;
-
         sprite.setPosition(posX, posY);
         window->draw(sprite);
     }
@@ -333,5 +396,43 @@ void gui::drawResources(sf::RenderWindow *window) {
                 }
             }
         }
+    }
+}
+
+void gui::addPopMessage(const std::string& msg) {
+    const size_t maxMessages = 10;
+    if (popMessages.size() >= maxMessages) {
+        popMessages.pop_front();
+    }
+    popMessages.push_back({msg});
+}
+
+void gui::drawPopMessages(sf::RenderWindow *window) {
+    float padding = 10.f;
+    float margin = 20.f;
+    float messageSpacing = 8.f;
+    float y = window->getSize().y - margin;
+
+    for (auto it = popMessages.rbegin(); it != popMessages.rend(); ++it) {
+        sf::Text popMessage(it->text, font, 30);
+        popMessage.setFillColor(sf::Color::White);
+
+        sf::FloatRect textBounds = popMessage.getLocalBounds();
+        float boxWidth = textBounds.width + 2 * padding;
+        float boxHeight = textBounds.height + 2 * padding;
+
+        float boxX = window->getSize().x - boxWidth - margin;
+        y -= boxHeight;
+
+        sf::RectangleShape popMessageBox(sf::Vector2f(boxWidth, boxHeight));
+        popMessageBox.setFillColor(sf::Color(0, 0, 0, 180));
+        popMessageBox.setPosition(boxX, y);
+
+        popMessage.setPosition(boxX + padding, y + padding - textBounds.top);
+
+        window->draw(popMessageBox);
+        window->draw(popMessage);
+
+        y -= messageSpacing;
     }
 }

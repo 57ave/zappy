@@ -35,7 +35,7 @@ typedef struct player_s {
     int x;
     int y;
     int lvl;
-    direction_t direction;
+    direction_t dir;
     action_t *action_queue;
     int inventory[RESOURCE_COUNT];
     int life_remain;

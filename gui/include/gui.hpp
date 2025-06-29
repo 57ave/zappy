@@ -11,6 +11,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <SFML/System.hpp>
+#include <SFML/Audio.hpp>
 #include <iostream>
 #include <string>
 #include <sys/socket.h>
@@ -23,6 +24,11 @@
 #include "../include/Map.hpp"
 #include "../include/Tile.hpp"
 #include "../include/Player.hpp"
+#include "../include/Egg.hpp"
+
+struct PopMessage {
+    std::string text;
+};
 
 class gui {
     private:
@@ -34,6 +40,8 @@ class gui {
         int windowSizeX;
         int windowSizeY;
         bool menu = true;
+        bool endGame = false;
+        std::string winnerTeam;
         sf::RenderWindow window;
         sf::Font font;
         float isoOffsetX = 0.0f;
@@ -43,8 +51,11 @@ class gui {
         Tile tile;
         std::vector<std::string> teams;
         std::vector<Player> players;
+        std::vector<Egg> eggs;
         sf::Clock gameClock;
         int timeGame = 0;
+        std::deque<PopMessage> popMessages;
+        sf::Music music;
 
         void handle_server_data();
         void process_server_messages();
@@ -58,14 +69,34 @@ class gui {
         void parse_pin(const std::string &message);
         void parse_sgt(const std::string &message);
         void parse_sst(const std::string &message);
+        void parse_pgt(const std::string &message);
+        void parse_pdr(const std::string &message);
+        void parse_pfk(const std::string &message);
+        void parse_enw(const std::string &message);
+        void parse_ebo(const std::string &message);
+        void parse_edi(const std::string &message);
+        void parse_pbc(const std::string &message);
+        void parse_pdi(const std::string &message);
+        void parse_pex(const std::string &message);
+        void parse_seg(const std::string &message);
+        void parse_smg(const std::string &message);
+        void parse_suc(const std::string &message);
+        void parse_sbp(const std::string &message);
+        void parse_pic(const std::string &message);
+        void parse_pie(const std::string &message);
 
         void parse_server_data(const std::string &data);
         void drawMenu(sf::RenderWindow *window);
+        void drawEndGame(sf::RenderWindow *window);
+        void drawGame(sf::RenderWindow *window);
         void drawMap(sf::RenderWindow *window);
         void drawTopBar(sf::RenderWindow *window);
         void drawPlayers(sf::RenderWindow *window);
         void drawResources(sf::RenderWindow *window);
-        void drawEggs();
+        void drawEggs(sf::RenderWindow *window);
+
+        void addPopMessage(const std::string& msg);
+        void drawPopMessages(sf::RenderWindow *window);
 
     public:
         gui();
