@@ -58,6 +58,16 @@ typedef struct {
     response_context_t *resp_ctx;
 } process_context_t;
 
+typedef struct {
+    int required_players;
+    int linemate;
+    int deraumere;
+    int sibur;
+    int mendiane;
+    int phiras;
+    int thystame;
+} elevation_requirements_t;
+
 void cmd_forward(server_t *server, player_t *player);
 void cmd_right(server_t *serv, player_t *player);
 void cmd_left(server_t *serv, player_t *player);
@@ -139,5 +149,13 @@ size_t calculate_all_levels_size(server_t *server, player_t *player,
 size_t process_vision_level_size(server_t *server, player_t *player,
     int level);
 void update_player_actions(server_t *server);
-
+elevation_requirements_t get_elevation_requirements(int level);
+int count_same_level_players(server_t *server, player_t *player);
+bool check_tile_resources(server_t *server, player_t *player,
+    elevation_requirements_t req);
+bool validate_incantation_requirements(server_t *server, player_t *player,
+    elevation_requirements_t req);
+void elevate_all_participants(server_t *server, player_t *initiator);
+void consume_incantation_resources(server_t *server, player_t *player,
+    elevation_requirements_t req);
 #endif /* !COMMANDS_H_ */

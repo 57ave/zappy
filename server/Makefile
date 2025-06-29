@@ -35,6 +35,7 @@ SRC	=	src/server.c    \
 		src/process_client.c	\
 		src/response.c	\
 		src/new_pos.c	\
+		src/incantation.c	\
 
 OBJ	=	$(SRC:.c=.o)
 
