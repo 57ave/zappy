@@ -2,8 +2,9 @@ use tokio::net::TcpStream;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use std::collections::HashMap;
-use std::time::Duration;
-use crate::commands::commands::{Command, Direction};
+use std::future::Future;
+use std::time::{Duration, Instant};
+use crate::commands::{broadcast::BroadcastSystem, commands::{Command, Direction}};
 use crate::drone::inventory::{Inventory, Resource};
 use crate::drone::player_state::{self, PlayerState};
 use crate::error::ClientError;
@@ -15,14 +16,15 @@ use crate::drone::levels;
 pub struct ZappyClient {
     reader: BufReader<OwnedReadHalf>,
     writer: BufWriter<OwnedWriteHalf>,
-    team_name: String,
+    pub team_name: String,
     client_num: i32,
     map_width: usize,
     map_height: usize,
     freq: u32,
     pub debug: bool,
     pub last_look: Option<Vec<String>>,
-    player_state: PlayerState,
+    pub player_state: PlayerState,
+    broadcast: BroadcastSystem,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -498,6 +500,95 @@ async fn face_direction(&mut self, dir: Direction) -> Result<(), ClientError> {
     }
     Ok(())
 }
+
+    async fn should_respond_to_help(&mut self, target_level: u32) -> Result<bool, ClientError> {
+        let current_level = self.get_level().await?;
+        Ok(current_level >= target_level.saturating_sub(1))
+    }
+
+    //broadcast
+
+    pub async fn send_help_request(&mut self, target_level: u32) -> Result<(), ClientError> {
+        let pos = self.player_state.get_position();
+        let msg = format!("HELP|{}|{}|{}:{}", target_level, self.team_name, pos.x, pos.y);
+        self.broadcast(&msg).await?;
+        sleep(Self::BROADCAST_DELAY).await;
+        Ok(())
+    }
+
+    pub async fn respond_to_help(&mut self, target_level: u32) -> Result<Option<Position>, ClientError> {
+        let pos = self.player_state.get_position();
+        let msg = format!("RESP|{}|{}|{}:{}", target_level, self.team_name, pos.x, pos.y);
+        self.broadcast(&msg).await?;
+        
+        let start_time = std::time::Instant::now();
+        while start_time.elapsed() < Self::BROADCAST_DELAY {
+            if let Some(received) = self.check_messages().await? {
+                if let Some(target_pos) = self.broadcast.handle_broadcast(&received, pos).await {
+                    return Ok(Some(target_pos));
+                }
+            }
+            sleep(Duration::from_millis(100)).await;
+        }
+        Ok(None)
+    }
+
+    const BROADCAST_DELAY: Duration = Duration::from_secs(2);
+    const ACTION_DELAY: Duration = Duration::from_millis(100);
+
+    pub async fn timed_action<F, Fut, R>(&mut self, action: F) -> Result<R, ClientError>
+    where
+        F: FnOnce(&mut Self) -> Fut,
+        Fut: Future<Output = Result<R, ClientError>>,
+    {
+        let start = Instant::now();
+        let result = action(self).await;
+        let elapsed = start.elapsed();
+        if elapsed < Self::ACTION_DELAY {
+            sleep(Self::ACTION_DELAY - elapsed).await;
+        }
+        result
+    }
+
+    pub async fn coordinate_level_up(&mut self) -> Result<(), ClientError> {
+        let current_level = self.get_level().await?;
+        let requirements = levels::get_level_requirements()
+            .into_iter()
+            .find(|r| r.level == current_level + 1)
+            .ok_or(ClientError::IncantationError("Max level reached".to_string()))?;
+
+        let has_enough_food = self.inventory().await?.food > 5;
+
+        if has_enough_food {
+            let msg = format!("HELP|{}|{}|{}:{}", 
+                current_level + 1,
+                self.team_name,
+                self.player_state.position.x,
+                self.player_state.position.y
+            );
+            self.broadcast(&msg).await?;
+
+            let start = Instant::now();
+            let mut responders = 0;
+            
+            while start.elapsed() < Self::BROADCAST_DELAY {
+                if let Some(message) = self.check_messages().await? {
+                    if message.starts_with(&format!("RESP|{}", current_level + 1)) {
+                        responders += 1;
+                        if responders >= requirements.required_players - 1 {
+                            break;
+                        }
+                    }
+                }
+                sleep(Duration::from_millis(50)).await;
+            }
+
+            if responders >= requirements.required_players - 1 {
+                return self.handle_level_up().await;
+            }
+        }
+        Ok(())
+    }
 
 }
 

@@ -20,6 +20,8 @@ pub enum Action {
     Explore,
     LayEgg,
     Wait,
+    JoinTeam,
+    MaintainFood,
 }
 
 #[async_trait]
