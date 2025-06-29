@@ -33,7 +33,8 @@ check-sfml:
 	@echo "Checking for SFML dependencies..."
 	@if ! pkg-config --exists sfml-graphics; then \
 		echo "Error: SFML development libraries not found"; \
-		echo "Install with: sudo apt-get install libsfml-dev (on Debian/Ubuntu)"; \
+		echo "Install with:"";\
+		echo " sudo apt-get install libsfml-dev (on Debian/Ubuntu)"; \
 		echo "Or: sudo dnf install SFML-devel (on Fedora)"; \
 		echo "Or: brew install sfml (on macOS with Homebrew)"; \
 		exit 1; \
@@ -42,10 +43,12 @@ check-sfml:
 
 install-deps-debian:
 	sudo apt-get update
-	sudo apt-get install -y libsfml-dev libgtest-dev libboost-all-dev libboost-filesystem-dev libboost-system-dev
+	sudo apt-get install -y libsfml-dev libgtest-dev \
+		libboost-all-dev libboost-filesystem-dev libboost-system-dev
 
 install-deps-fedora:
-	sudo dnf install -y SFML-devel gtest-devel boost-devel boost-filesystem-devel boost-system-devel
+	sudo dnf install -y SFML-devel gtest-devel boost-devel\
+		boost-filesystem-devel boost-system-devel
 
 clean:
 	rm -f $(OBJ)
@@ -55,4 +58,5 @@ fclean:	clean
 
 re:	fclean all
 
-.PHONY: $(NAME) all clean fclean re check-sfml install-deps-debian install-deps-fedora
+.PHONY: $(NAME) all clean fclean re check-sfml \
+	install-deps-debian install-deps-fedora
