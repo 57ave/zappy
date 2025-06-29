@@ -34,7 +34,7 @@ int count_same_level_players(server_t *server, player_t *player)
     int count = 0;
 
     for (int i = 0; i < server->player_nb; i++) {
-        if (server->players[i]->x == player->x && 
+        if (server->players[i]->x == player->x &&
             server->players[i]->y == player->y &&
             server->players[i]->lvl == player->lvl) {
             count++;
