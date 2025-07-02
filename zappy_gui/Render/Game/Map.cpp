@@ -5,7 +5,7 @@
 ** Map.cpp
 */
 
-#include "../include/Map.hpp"
+#include "Map.hpp"
 
 void Map::resize(int width, int height) {
     _width = width;

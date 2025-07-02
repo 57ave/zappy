@@ -6,14 +6,13 @@
 ##
 
 SRC	=	main.cpp			\
-		src/gui.cpp			\
-		src/pars_args.cpp	\
-		src/pars_server.cpp	\
-		src/Map.cpp			\
-		src/Tile.cpp		\
-		src/Player.cpp		\
-		src/Egg.cpp			\
-
+		Network/NetworkParser/NetworkParser.cpp	\
+		Network/NetworkClient/NetworkClient.cpp	\
+		Core/GuiCore.cpp	\
+		Render/Game/Egg.cpp	\
+		Render/Game/Map.cpp	\
+		Render/Game/Tile.cpp	\
+		Render/Game/Player.cpp	\
 
 NAME	=	zappy_gui
 

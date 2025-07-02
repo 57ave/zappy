@@ -5,7 +5,7 @@
 ** Egg.cpp
 */
 
-#include "../include/Egg.hpp"
+#include "Egg.hpp"
 
 Egg::Egg(int id, int playerId, int x, int y)
     : _id(id), _playerId(playerId), _x(x), _y(y) {}

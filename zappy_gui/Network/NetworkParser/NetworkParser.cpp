@@ -1,29 +1,40 @@
 /*
 ** EPITECH PROJECT, 2025
-** zappy
+** Zappy
 ** File description:
-** pars_messages.cpp
+** NetworkParser
 */
 
-#include "../include/gui.hpp"
+#include "NetworkParser.hpp"
 #include <sstream>
-#include <unordered_map>
-#include <functional>
+#include <algorithm>
+#include <array>
 
-static std::string resourceNames[] = {
+static const std::string resourceNames[] = {
     "food", "linemate", "deraumere", "sibur", "mendiane", "phiras", "thystame"
 };
 
-void gui::parse_msz(const std::string &message) {
+void NetworkParser::addPopMessage(const std::string& msg)
+{
+    const size_t maxMessages = 10;
+    if (_popMessages.size() >= maxMessages) {
+        _popMessages.pop_front();
+    }
+    _popMessages.push_back({msg});
+}
+
+void NetworkParser::parse_msz(const std::string &message)
+{
     std::istringstream iss(message);
     std::string msz;
     iss >> msz;
     int width, height;
     iss >> width >> height;
-    map.resize(width, height);
+    _map.resize(width, height);
 }
 
-void gui::parse_bct(const std::string &message) {
+void NetworkParser::parse_bct(const std::string &message)
+{
     std::istringstream iss(message);
     std::string bct;
     int x, y;
@@ -32,19 +43,21 @@ void gui::parse_bct(const std::string &message) {
     iss >> x >> y;
     for (int &res : resources)
         iss >> res;
-    map.at(x, y).setResources(resources);
+    _map.at(x, y).setResources(resources);
 }
 
-void gui::parse_tna(const std::string &message) {
+void NetworkParser::parse_tna(const std::string &message)
+{
     std::istringstream iss(message);
     std::string tna;
     std::string team_name;
     iss >> tna >> team_name;
     if (!team_name.empty())
-        teams.push_back(team_name);
+        _teams.push_back(team_name);
 }
 
-void gui::parse_pnw(const std::string &message) {
+void NetworkParser::parse_pnw(const std::string &message)
+{
     std::istringstream iss(message);
     std::string pnw;
     int id, x, y, direction, level;
@@ -53,8 +66,8 @@ void gui::parse_pnw(const std::string &message) {
     if (team_name.empty()) {
         return;
     }
-    players.push_back(Player(id, team_name));
-    for (auto &player : players) {
+    _players.push_back(Player(id, team_name));
+    for (auto &player : _players) {
         if (player.getId() == id) {
             player.setPosition(x, y, direction);
             player.setLevel(level);
@@ -63,12 +76,13 @@ void gui::parse_pnw(const std::string &message) {
     }
 }
 
-void gui::parse_ppo(const std::string &message) {
+void NetworkParser::parse_ppo(const std::string &message)
+{
     std::istringstream iss(message);
     std::string ppo;
     int id, x, y, direction;
     iss >> ppo >> id >> x >> y >> direction;
-    for (auto &player : players) {
+    for (auto &player : _players) {
         if (player.getId() == id) {
             player.setPosition(x, y, direction);
             return;
@@ -76,12 +90,13 @@ void gui::parse_ppo(const std::string &message) {
     }
 }
 
-void gui::parse_plv(const std::string &message) {
+void NetworkParser::parse_plv(const std::string &message)
+{
     std::istringstream iss(message);
     std::string plv;
     int id, level;
     iss >> plv >> id >> level;
-    for (auto &player : players) {
+    for (auto &player : _players) {
         if (player.getId() == id) {
             player.setLevel(level);
             return;
@@ -90,7 +105,8 @@ void gui::parse_plv(const std::string &message) {
 
 }
 
-void gui::parse_pin(const std::string &message) {
+void NetworkParser::parse_pin(const std::string &message)
+{
     std::istringstream iss(message);
     std::string pin;
     int id, x, y;
@@ -98,7 +114,7 @@ void gui::parse_pin(const std::string &message) {
     iss >> pin >> id >> x >> y;
     for (int &res : resources)
         iss >> res;
-    for (auto &player : players) {
+    for (auto &player : _players) {
         if (player.getId() == id) {
             player.setInventory(resources);
             break;
@@ -106,79 +122,86 @@ void gui::parse_pin(const std::string &message) {
     }
 }
 
-void gui::parse_sgt(const std::string &message) {
+void NetworkParser::parse_sgt(const std::string &message)
+{
     std::istringstream iss(message);
     std::string sgt;
     int time;
     iss >> sgt >> time;
-    timeGame = time;
+    _timeGame = time;
 }
 
-void gui::parse_sst(const std::string &message) {
+void NetworkParser::parse_sst(const std::string &message)
+{
     std::istringstream iss(message);
     std::string sgt;
     int time;
     iss >> sgt >> time;
-    timeGame = time;
+    _timeGame = time;
 }
 
-void gui::parse_pgt(const std::string &message) {
+void NetworkParser::parse_pgt(const std::string &message)
+{
     std::istringstream iss(message);
     std::string pgt;
     int id, resourceType;
     iss >> pgt >> id >> resourceType;
-    for (auto &player : players) {
+    for (auto &player : _players) {
         if (player.getId() == id) {
             addPopMessage("Player " + std::to_string(id) + " is taking " + resourceNames[resourceType]);
         }
     }
 }
 
-void gui::parse_pdr(const std::string &message) {
+void NetworkParser::parse_pdr(const std::string &message)
+{
     std::istringstream iss(message);
     std::string pdr;
     int id, resourceType;
     iss >> pdr >> id >> resourceType;
-    for (auto &player : players) {
+    for (auto &player : _players) {
         if (player.getId() == id) {
             addPopMessage("Player " + std::to_string(id) + " is dropping " + resourceNames[resourceType]);
         }
     }
 }
 
-void gui::parse_pfk(const std::string &message) {
+void NetworkParser::parse_pfk(const std::string &message)
+{
     std::istringstream iss(message);
     std::string pfk;
     int id;
     iss >> pfk >> id;
-    for (auto &player : players) {
+    for (auto &player : _players) {
         if (player.getId() == id) {
             addPopMessage("Egg laying by the player " + std::to_string(id));
         }
     }
 }
 
-void gui::parse_enw(const std::string &message) {
+void NetworkParser::parse_enw(const std::string &message)
+{
     std::istringstream iss(message);
     std::string enw;
     int eggId, playerId, x, y;
     iss >> enw >> eggId >> playerId >> x >> y;
-    eggs.push_back(Egg(eggId, playerId, x, y));
+    _eggs.push_back(Egg(eggId, playerId, x, y));
     
-    for (auto &player : players) {
-        if (player.getId() == eggs.back().getPlayerId()) {
-            addPopMessage("Egg laying by the player " + std::to_string(eggs.back().getPlayerId()));
+    for (auto &player : _players) {
+        if (player.getId() == _eggs.back().getPlayerId()) {
+            addPopMessage("Egg laying by the player " + std::to_string(_eggs.back().getPlayerId()));
         }
     }
     parse_pfk("pfk " + std::to_string(playerId) + "\n");
 }
 
-void gui::parse_ebo(const std::string &message) {
+void NetworkParser::parse_ebo(const std::string &message)
+{
     std::istringstream iss(message);
     std::string ebo;
     int eggId;
     iss >> ebo >> eggId;
-    for (auto &egg : eggs) {
+    for (auto &egg : _eggs) {
         if (egg.getId() == eggId) {
             addPopMessage("Egg " + std::to_string(eggId) + " is connected to player " + std::to_string(egg.getPlayerId()));
             return;
@@ -186,24 +209,26 @@ void gui::parse_ebo(const std::string &message) {
     }
 }
 
-void gui::parse_edi(const std::string &message) {
+void NetworkParser::parse_edi(const std::string &message)
+{
     std::istringstream iss(message);
     std::string edi;
     int eggId;
     iss >> edi >> eggId;
-    eggs.erase(std::remove_if(eggs.begin(), eggs.end(),
-        [eggId](const Egg &egg) { return egg.getId() == eggId; }), eggs.end());
+    _eggs.erase(std::remove_if(_eggs.begin(), _eggs.end(),
+        [eggId](const Egg &egg) { return egg.getId() == eggId; }), _eggs.end());
     addPopMessage("Egg " + std::to_string(eggId) + " is dead");
 }
 
-void gui::parse_pbc(const std::string &message) {
+void NetworkParser::parse_pbc(const std::string &message)
+{
     std::istringstream iss(message);
     std::string pbc;
     int id;
     std::string broadcastMessage;
     iss >> pbc >> id;
     std::getline(iss, broadcastMessage);
-    for (auto &player : players) {
+    for (auto &player : _players) {
         if (player.getId() == id) {
             addPopMessage("Player " + std::to_string(id) + " is broadcast:\n" + broadcastMessage);
             return;
@@ -211,22 +236,24 @@ void gui::parse_pbc(const std::string &message) {
     }
 }
 
-void gui::parse_pdi(const std::string &message) {
+void NetworkParser::parse_pdi(const std::string &message)
+{
     std::istringstream iss(message);
     std::string pdi;
     int id;
     iss >> pdi >> id;
-    players.erase(std::remove_if(players.begin(), players.end(),
-        [id](const Player &player) { return player.getId() == id; }), players.end());
+    _players.erase(std::remove_if(_players.begin(), _players.end(),
+        [id](const Player &player) { return player.getId() == id; }), _players.end());
     addPopMessage("Player " + std::to_string(id) + " is dead");
 }
 
-void gui::parse_pex(const std::string &message) {
+void NetworkParser::parse_pex(const std::string &message)
+{
     std::istringstream iss(message);
     std::string pex;
     int id;
     iss >> pex >> id;
-    for (auto &player : players) {
+    for (auto &player : _players) {
         if (player.getId() == id) {
             addPopMessage("Player " + std::to_string(id) + " has been ejected");
             return;
@@ -234,21 +261,23 @@ void gui::parse_pex(const std::string &message) {
     }
 }
 
-void gui::parse_seg(const std::string &message) {
+void NetworkParser::parse_seg(const std::string &message)
+{
     std::istringstream iss(message);
     std::string seg;
     int id;
     iss >> seg >> id;
-    for (auto &player : players) {
+    for (auto &player : _players) {
         if (player.getId() == id) {
-            winnerTeam = player.getTeam();
-            endGame = true;
+            _winnerTeam = player.getTeam();
+            _endGame = true;
             return;
         }
     }
 }
 
-void gui::parse_smg(const std::string &message) {
+void NetworkParser::parse_smg(const std::string &message)
+{
     std::istringstream iss(message);
     std::string smg;
     std::string msg;
@@ -257,15 +286,18 @@ void gui::parse_smg(const std::string &message) {
     addPopMessage("Server: " + msg);
 }
 
-void gui::parse_suc(const std::string &message) {
+void NetworkParser::parse_suc(const std::string &message)
+{
     addPopMessage("Unknown command");
 }
 
-void gui::parse_sbp(const std::string &message) {
+void NetworkParser::parse_sbp(const std::string &message)
+{
     addPopMessage("Command parameter");
 }
 
-void gui::parse_pic(const std::string &message) {
+void NetworkParser::parse_pic(const std::string &message)
+{
     std::istringstream iss(message);
     std::string pic;
     int x, y, playerLvl, idPlayer1;
@@ -278,7 +310,8 @@ void gui::parse_pic(const std::string &message) {
     addPopMessage("Player " + std::to_string(idPlayer1) + " start an incantation");
 }
 
-void gui::parse_pie(const std::string &message) {
+void NetworkParser::parse_pie(const std::string &message)
+{
     std::istringstream iss(message);
     std::string pie;
     int x, y;
@@ -291,41 +324,42 @@ void gui::parse_pie(const std::string &message) {
     }
 }
 
-void gui::parse_server_data(const std::string &message) {
-    std::string type = message.substr(0, 3);
-
-    static const std::unordered_map<std::string, std::function<void(gui*, const std::string&)>> cmd = {
-        {"msz", &gui::parse_msz},
-        {"bct", &gui::parse_bct},
-        {"tna", &gui::parse_tna},
-        {"pnw", &gui::parse_pnw},
-        {"ppo", &gui::parse_ppo},
-        {"plv", &gui::parse_plv},
-        {"pin", &gui::parse_pin},
-        {"sgt", &gui::parse_sgt},
-        {"sst", &gui::parse_sst},
-        {"pgt", &gui::parse_pgt},
-        {"pdr", &gui::parse_pdr},
-        {"pfk", &gui::parse_pfk},
-        {"enw", &gui::parse_enw},
-        {"ebo", &gui::parse_ebo},
-        {"edi", &gui::parse_edi},
-        {"pbc", &gui::parse_pbc},
-        {"pic", &gui::parse_pic},
-        {"pie", &gui::parse_pie},
-        {"pdi", &gui::parse_pdi},
-        {"pex", &gui::parse_pex},
-        {"seg", &gui::parse_seg},
-        {"smg", &gui::parse_smg},
-        {"suc", &gui::parse_suc},
-        {"sbp", &gui::parse_sbp}
+void NetworkParser::parse(const std::string &msg)
+{
+    std::istringstream iss(msg);
+    std::string command;
+    iss >> command;
+    static const std::unordered_map<std::string, std::function<void(NetworkParser*, const std::string&)>> cmd = {
+        {"msz", &NetworkParser::parse_msz},
+        {"bct", &NetworkParser::parse_bct},
+        {"tna", &NetworkParser::parse_tna},
+        {"pnw", &NetworkParser::parse_pnw},
+        {"ppo", &NetworkParser::parse_ppo},
+        {"plv", &NetworkParser::parse_plv},
+        {"pin", &NetworkParser::parse_pin},
+        {"sgt", &NetworkParser::parse_sgt},
+        {"sst", &NetworkParser::parse_sst},
+        {"pgt", &NetworkParser::parse_pgt},
+        {"pdr", &NetworkParser::parse_pdr},
+        {"pfk", &NetworkParser::parse_pfk},
+        {"enw", &NetworkParser::parse_enw},
+        {"ebo", &NetworkParser::parse_ebo},
+        {"edi", &NetworkParser::parse_edi},
+        {"pbc", &NetworkParser::parse_pbc},
+        {"pdi", &NetworkParser::parse_pdi},
+        {"pex", &NetworkParser::parse_pex},
+        {"seg", &NetworkParser::parse_seg},
+        {"smg", &NetworkParser::parse_smg},
+        {"suc", &NetworkParser::parse_suc},
+        {"sbp", &NetworkParser::parse_sbp},
+        {"pic", &NetworkParser::parse_pic},
+        {"pie", &NetworkParser::parse_pie}
     };
 
-    auto it = cmd.find(type);
+    auto it = cmd.find(command);
     if (it != cmd.end()) {
-        it->second(this, message);
-    } else if (type == "WEL") {
+        it->second(this, msg);
     } else {
-        std::cout << "Unknown message type: " << type << std::endl;
+        addPopMessage("Unhandled command: " + command);
     }
 }

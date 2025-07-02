@@ -5,7 +5,7 @@
 ** Player.cpp
 */
 
-#include "../include/Player.hpp"
+#include "Player.hpp"
 
 Player::Player(int id, const std::string &team)
     : _id(id), _x(0), _y(0), _direction(0), _lvl(1), _team(team) {
