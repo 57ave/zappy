@@ -8,6 +8,7 @@
 #ifndef INETWORKPARSER_HPP_
     #define INETWORKPARSER_HPP_
     #include <string>
+    #include "../Render/Game/GameState.hpp"
 
 class INetworkParser {
     public:

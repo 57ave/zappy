@@ -20,10 +20,11 @@ void GuiCore::run()
     _running = true;
     _network->startReceive();
 
-    while (_running) {
+    while (_running && _render->isOpen()) {
+        _render->handleEvents();
         processNetworkMsg();
         updateGameState();
-        _render->render();
+        _render->render(_gameState);
     }
     _network->stopReceive();
 }

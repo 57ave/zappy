@@ -13,6 +13,8 @@ SRC	=	main.cpp			\
 		Render/Game/Map.cpp	\
 		Render/Game/Tile.cpp	\
 		Render/Game/Player.cpp	\
+		Render/RenderGui.cpp	\
+		Render/DrawGui.cpp	\
 
 NAME	=	zappy_gui
 
