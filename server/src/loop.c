@@ -38,10 +38,12 @@ static void server_main_loop(server_t *server, server_config_t *config)
     int clients_connected;
     struct timeval last_tick;
     int tick_count = 0;
+    int timeout = 0;
 
     gettimeofday(&last_tick, NULL);
     while (1) {
-        clients_connected = poll(server->pfds, NB_CONNECTION + 1, 50);
+        timeout = 1000 / config->freq;
+        clients_connected = wait_activity(server, timeout);
         if (clients_connected < 0) {
                 perror("Erreur poll");
             continue;
