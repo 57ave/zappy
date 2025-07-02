@@ -90,8 +90,20 @@ static void init_teams(int ac, char **av, server_config_t *config, int i)
         }
 }
 
+int check_freq(server_config_t *config)
+{
+    if (config->freq <= 0) {
+        printf("Error : Frequency must be > 0\n");
+        return -1;
+    }
+    config->tick_freq = 1000000 / config->freq;
+    return 0;
+}
+
 int parse_args(int ac, char **av, server_config_t *config)
 {
+    int res = 0;
+
     for (int i = 1; i < ac; i++) {
         i = parse_begin(ac, av, config, i);
         if (i == -1)
@@ -102,12 +114,12 @@ int parse_args(int ac, char **av, server_config_t *config)
         }
         if (strcmp(av[i], "-f") == 0) {
             config->freq = parse_world_size(i, ac, av);
-            config->tick_freq = 1000000 / config->freq;
+            res = check_freq(config);
             i++;
         }
     }
     for (int i = 1; i < ac; i++) {
         init_teams(ac, av, config, i);
     }
-    return 0;
+    return res;
 }

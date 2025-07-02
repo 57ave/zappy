@@ -29,6 +29,27 @@ static void cleanup_server(server_t *server)
     free(server);
 }
 
+int validate_config(const server_config_t *config)
+{
+    if (config->port <= 0) {
+        printf("Error: Invalid port\n");
+        return -1;
+    }
+    if (config->nb_clients <= 0) {
+        printf("Error: Number of clients must be > 0\n");
+        return -1;
+    }
+    if (config->freq <= 0) {
+        printf("Error: Frequency must be > 0\n");
+        return -1;
+    }
+    if (config->team_nb <= 0 || config->team_name == NULL) {
+        printf("Error: At least one team must be provided\n");
+        return -1;
+    }
+    return 0;
+}
+
 int main(int ac, char **av)
 {
     server_t *server = malloc(sizeof(server_t));
@@ -37,11 +58,9 @@ int main(int ac, char **av)
     if (!server || check_arguments(ac) != SUCCESS) {
         return FAILURE;
     }
-    if (parse_args(ac, av, &config) < 0) {
+    if (parse_args(ac, av, &config) < 0 || validate_config(&config) < 0) {
         return FAILURE;
     }
-    if (config.freq <= 0)
-        return FAILURE;
     server->port = config.port;
     create_server(server);
     server->map = malloc(sizeof(map_t));
