@@ -90,7 +90,7 @@ static void init_teams(int ac, char **av, server_config_t *config, int i)
         }
 }
 
-int check_freq(server_config_t *config)
+static int check_freq(server_config_t *config)
 {
     if (config->freq <= 0) {
         printf("Error : Frequency must be > 0\n");
