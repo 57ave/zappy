@@ -33,6 +33,24 @@ int read_client_data(server_t *server, int i, char *buffer,
     return read_size;
 }
 
+void send_player_to_gui(int gui_fd, player_t *player)
+{
+    if (gui_fd == -1 || !player)
+        return;
+    dprintf(gui_fd, "pnw %d %d %d %d %d %s\n",
+        player->id, player->x, player->y,
+        player->dir + 1, player->lvl, player->team);
+    dprintf(gui_fd, "pin %d %d %d %d %d %d %d %d %d %d\n",
+        player->id, player->x, player->y,
+        player->inventory[FOOD],
+        player->inventory[LINEMATE],
+        player->inventory[DERAUMERE],
+        player->inventory[SIBUR],
+        player->inventory[MENDIANE],
+        player->inventory[PHIRAS],
+        player->inventory[THYSTAME]);
+}
+
 void register_player(server_t *server, int client_index,
     team_t *team, const char *team_name)
 {
@@ -55,6 +73,7 @@ void register_player(server_t *server, int client_index,
     dprintf(fd, "%d %d\n", server->map->width, server->map->height);
     printf("Player registered: id=%d, fd=%d, team=%s\n", player->id,
         player->fd, player->team);
+    send_player_to_gui(server->gui_fd, player);
 }
 
 team_t *find_team(const char *name, server_config_t *config)
