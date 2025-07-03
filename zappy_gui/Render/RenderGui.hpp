@@ -10,6 +10,7 @@
 
 #include "IRender.hpp"
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <memory>
 #include <deque>
 #include "Game/Map.hpp"
@@ -33,6 +34,7 @@ class Render : public IRender {
         std::unique_ptr<sf::RenderWindow> _window;
         sf::Font _font;
         sf::Texture _playerTexture, _eggTexture, _resourcesTexture;
+        sf::Music _backgroundMusic;
         int _width = 0, _height = 0;
         bool menu, endGame;
         float _isoOffsetX = 0.f, _isoOffsetY = 0.f;
@@ -47,6 +49,8 @@ class Render : public IRender {
         void drawPlayers(const GameState &gameState);
         void drawResources(const GameState &gameState);
         void drawPopMessages(const GameState &gameState);
+        void drawGlobalInfo(const GameState &gameState);
+
 };
 
 #endif // RENDER_GUI_HPP

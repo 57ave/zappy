@@ -65,6 +65,7 @@ void Render::drawGame(const GameState &gameState) {
     drawEggs(gameState);
     drawPlayers(gameState);
     drawPopMessages(gameState);
+    drawGlobalInfo(gameState);
     drawTopBar(gameState);
 }
 
@@ -288,4 +289,43 @@ void Render::drawPopMessages(const GameState &gameState) {
 
         y -= messageSpacing;
     }
+}
+
+
+// A droite au dessus du pop messages
+void Render::drawGlobalInfo(const GameState &gameState) {
+    sf::RectangleShape infoBox(sf::Vector2f(300, 250));
+    infoBox.setFillColor(sf::Color(200, 200, 200, 200));
+    infoBox.setPosition(_window.get()->getSize().x - 320, 90);
+    infoBox.setOutlineColor(sf::Color::Black);
+    infoBox.setOutlineThickness(2.0f);
+    _window->draw(infoBox);
+
+    std::string info = "Map Size: " + std::to_string(gameState.map.getWidth()) + "x" + std::to_string(gameState.map.getHeight()) + "\n";
+    info += "Fps: 60\n";
+    Map _cpy = gameState.map;
+    int food = 0, linemate = 0, deraumere = 0, sibur = 0, mendiane = 0, phiras = 0, thystame = 0;
+    for (int j = 0; j < gameState.map.getHeight(); j++) {
+        for (int i = 0; i < gameState.map.getWidth(); i++) {
+            const auto& resources = _cpy.at(i, j).getResources();
+            food += resources[0];
+            linemate += resources[1];
+            deraumere += resources[2];
+            sibur += resources[3];
+            mendiane += resources[4];
+            phiras += resources[5];
+            thystame += resources[6];
+        }
+    }
+    info += "Food: " + std::to_string(food) + "\n";
+    info += "Linemate: " + std::to_string(linemate) + "\n";
+    info += "Deraumere: " + std::to_string(deraumere) + "\n";
+    info += "Sibur: " + std::to_string(sibur) + "\n";
+    info += "Mendiane: " + std::to_string(mendiane) + "\n";
+    info += "Phiras: " + std::to_string(phiras) + "\n";
+    info += "Thystame: " + std::to_string(thystame) + "\n";
+    sf::Text globalInfo(info, _font, 20);
+    globalInfo.setFillColor(sf::Color::White);
+    globalInfo.setPosition(infoBox.getPosition().x + 10, infoBox.getPosition().y + 10);
+    _window->draw(globalInfo);
 }

@@ -19,10 +19,15 @@ void Render::init(int width, int height) {
     menu = true;
     endGame = false;
     _window = std::make_unique<sf::RenderWindow>(sf::VideoMode(width, height), "Zappy GUI");
+    _window->setFramerateLimit(60);
     _font.loadFromFile("Render/assets/font.ttf");
     _playerTexture.loadFromFile("Render/assets/player.png");
     _eggTexture.loadFromFile("Render/assets/egg.png");
     _resourcesTexture.loadFromFile("Render/assets/materials.png");
+    _backgroundMusic.openFromFile("Render/assets/music.ogg");
+    _backgroundMusic.setLoop(true);
+    _backgroundMusic.setVolume(50);
+    _backgroundMusic.play();
 }
 
 void Render::render(const GameState &gameState) {
