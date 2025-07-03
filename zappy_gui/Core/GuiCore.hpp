@@ -12,6 +12,7 @@
     #include "../Render/IRender.hpp"
     #include "../Network/NetworkClient/NetworkClient.hpp"
     #include "../Network/NetworkParser/NetworkParser.hpp"
+    #include "../Render/Game/GameState.hpp"
 
 class GuiCore {
     public:
@@ -27,6 +28,7 @@ class GuiCore {
         std::unique_ptr<INetwork> _network;
         std::unique_ptr<IRender> _render;
         NetworkParser _parser;
+        GameState _gameState;
         bool _running;
 };
 
