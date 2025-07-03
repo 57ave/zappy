@@ -1,7 +1,7 @@
 use tokio::net::TcpStream;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::future::Future;
 use std::time::{Duration, Instant};
 use crate::commands::{broadcast::BroadcastSystem, commands::{Command, Direction}};
@@ -25,6 +25,9 @@ pub struct ZappyClient {
     pub last_look: Option<Vec<String>>,
     pub player_state: PlayerState,
     broadcast: BroadcastSystem,
+    pending_messages: VecDeque<String>,
+    message_buffer: VecDeque<String>,
+    last_message_time: Instant,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -101,6 +104,10 @@ impl ZappyClient {
             debug,
             last_look: None,
             player_state: PlayerState::new(),
+            broadcast: BroadcastSystem::new(),
+            pending_messages: std::collections::VecDeque::new(),
+            message_buffer: std::collections::VecDeque::new(),
+            last_message_time: std::time::Instant::now(),
         })
     }
     
@@ -501,7 +508,7 @@ async fn face_direction(&mut self, dir: Direction) -> Result<(), ClientError> {
     Ok(())
 }
 
-    async fn should_respond_to_help(&mut self, target_level: u32) -> Result<bool, ClientError> {
+    pub async fn should_respond_to_help(&mut self, target_level: u32) -> Result<bool, ClientError> {
         let current_level = self.get_level().await?;
         Ok(current_level >= target_level.saturating_sub(1))
     }
@@ -590,5 +597,61 @@ async fn face_direction(&mut self, dir: Direction) -> Result<(), ClientError> {
         Ok(())
     }
 
+    pub async fn process_broadcasts(&mut self) -> Result<(), ClientError> {
+        let messages = self.check_messages().await?;
+        for message in messages {
+            self.broadcast.handle_broadcast(&message, self.player_state.get_position()).await;
+        }
+        Ok(())
+    }
+    pub async fn check_messages(&mut self) -> Result<Option<String>, ClientError> {
+        if let Some(msg) = self.pending_messages.pop_front() {
+            return Ok(Some(msg));
+        }
+
+        let mut buf = String::new();
+        match self.reader.read_line(&mut buf).await {
+            Ok(0) => Ok(None),
+            Ok(_) => {
+                let msg = buf.trim().to_string();
+                if self.debug {
+                    println!("[DEBUG] Received: {}", msg);
+                }
+                self.message_buffer.push_back(msg.clone());
+                self.last_message_time = Instant::now();
+                Ok(Some(msg))
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => Ok(None),
+            Err(e) => Err(ClientError::IoError(e)),
+        }
+    }
+
+    pub async fn does_need_help(&mut self, message: &str) -> Result<Option<(u32, Position)>, ClientError> {
+        let parts: Vec<&str> = message.splitn(2, ',').collect();
+        if parts.len() != 2 {
+            return Ok(None);
+        }
+
+        let content = parts[1].trim();
+        if !content.starts_with("HELP|") {
+            return Ok(None);
+        }
+
+        let help_parts: Vec<&str> = content.split('|').collect();
+        if help_parts.len() != 5 {
+            return Ok(None);
+        }
+
+        if help_parts[2] != self.team_name {
+            return Ok(None);
+        }
+
+        let target_level = help_parts[1].parse().unwrap_or(0);
+        let x = help_parts[3].parse().unwrap_or(0);
+        let y = help_parts[4].parse().unwrap_or(0);
+
+        Ok(Some((target_level, Position { x, y })))
+    }
 }
+
 
