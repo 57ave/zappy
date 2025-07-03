@@ -11,7 +11,8 @@ use super::{Priority, Action};
 
 pub async fn make_decision(client: &mut ZappyClient) -> Result<(), ClientError> {
     let decision_tree = DecisionTree::new();
-    
+    client.process_broadcasts().await?;
+
     loop {
         let (priority, action) = decision_tree.evaluate(client).await;
         match (priority, action) {
@@ -102,7 +103,7 @@ pub async fn handle_maintain_food_supply(client: &mut ZappyClient) -> Result<(),
 
 pub async fn handle_join_team(client: &mut ZappyClient) -> Result<(), ClientError> {
     if let Some(message) = client.check_messages().await? {
-        if let Some((target_level, position)) = client.parse_help_request(&message).await? {
+        if let Some((target_level, position)) = client.does_need_help(&message).await? {
             if client.should_respond_to_help(target_level).await? {
                 let pos = client.player_state.get_position();
                 let msg = format!("RESP|{}|{}|{}|{}",
@@ -118,5 +119,5 @@ pub async fn handle_join_team(client: &mut ZappyClient) -> Result<(), ClientErro
             }
         }
     }
-    client.explore().await
+    return Ok(());
 }

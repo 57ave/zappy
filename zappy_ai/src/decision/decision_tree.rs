@@ -6,6 +6,7 @@ pub enum DecisionNodeEnum {
     Food(FoodNode),
     Resource(ResourceNode),
     LevelUp(LevelUpNode),
+    Join(JoinNode),
 }
 
 pub struct DecisionTree {
@@ -33,6 +34,7 @@ impl DecisionNode for DecisionNodeEnum {
             DecisionNodeEnum::Food(node) => node.evaluate(client).await,
             DecisionNodeEnum::Resource(node) => node.evaluate(client).await,
             DecisionNodeEnum::LevelUp(node) => node.evaluate(client).await,
+            DecisionNodeEnum::Join(node) => node.evaluate(client).await,
         }
     }
 }
@@ -100,24 +102,30 @@ pub struct JoinNode {
 #[async_trait]
 impl DecisionNode for JoinNode {
     async fn evaluate(&self, client: &mut ZappyClient) -> (Priority, Action) {
-        match client.check_messages().await {
-            Ok(Some(msg)) if msg.contains("HELP") => {
-                if client.should_respond_to_help().await.unwrap_or(false) {
-                    (Priority::Critical, Action::JoinTeam)
-                } else {
-                    (Priority::Low, Action::Wait)
+        if let Ok(Some(message)) = client.check_messages().await {
+            match client.does_need_help(&message).await {
+                Ok(Some((target_level, _position))) => {
+                    if client.should_respond_to_help(target_level).await.unwrap_or(false) {
+                        return (Priority::Critical, Action::JoinTeam);
+                    }
                 }
-            }
-            _ => {
-                if let Some(next) = &self.next {
-                    next.evaluate(client).await
-                } else {
-                    (Priority::Low, Action::Explore)
+                Ok(None) => (),
+                Err(e) => {
+                    if client.debug {
+                        eprintln!("Error parsing help message: {:?}", e);
+                    }
                 }
             }
         }
+
+        if let Some(next) = &self.next {
+            next.evaluate(client).await
+        } else {
+            (Priority::Low, Action::Explore)
+        }
     }
 }
+
 
 impl DecisionTree {
     pub fn new() -> Self {
@@ -145,6 +153,10 @@ impl DecisionTree {
         }
     }
     pub async fn evaluate(&self, client: &mut ZappyClient) -> (Priority, Action) {
-        self.root.evaluate(client).await
+        let (priority, action) = self.root.evaluate(client).await;
+        if client.debug {
+            println!("Decision: {:?}, {:?}", priority, action);
+        }
+        (priority, action)
     }
 } 
