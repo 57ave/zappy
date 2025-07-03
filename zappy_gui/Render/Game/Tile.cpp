@@ -5,7 +5,7 @@
 ** Tile.cpp
 */
 
-#include "../include/Tile.hpp"
+#include "Tile.hpp"
 
 void Tile::setResources(const std::array<int, 7> &resources) {
     _resources = resources;
