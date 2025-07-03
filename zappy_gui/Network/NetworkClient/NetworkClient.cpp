@@ -44,7 +44,6 @@ void NetworkClient::networkLoop()
 {
     while (_running) {
         receiveMessage();
-        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // éviter CPU à 100%
     }
 }
 
