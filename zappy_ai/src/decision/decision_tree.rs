@@ -50,7 +50,9 @@ impl DecisionNode for FoodNode {
                 }
             }
             Err(e) => {
-                eprintln!("Error checking food: {:?}", e);
+                if client.debug {
+                    eprintln!("Error checking food: {:?}", e);
+                }
                 (Priority::Low, Action::Wait)
             }
         }
@@ -81,7 +83,9 @@ impl DecisionNode for LevelUpNode {
                 (Priority::High, Action::CollectResource)
             }
             Err(e) => {
-                eprintln!("Error checking level requirements: {:?}", e);
+                if client.debug {
+                    eprintln!("Error checking level requirements: {:?}", e);
+                }
                 (Priority::Low, Action::LayEgg)
             }
         }
