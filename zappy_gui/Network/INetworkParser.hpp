@@ -12,7 +12,7 @@
 class INetworkParser {
     public:
         virtual ~INetworkParser() = default;
-        virtual void parse(const std::string &msg) = 0;
+        virtual void parse(const std::string &msg, GameState &gameState) = 0;
 };
 
 #endif /* !INETWORKPARSER_HPP_ */

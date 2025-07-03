@@ -12,6 +12,7 @@
     #include "Egg.hpp"
     #include "Map.hpp"
     #include "Player.hpp"
+    #include <queue>
 
 struct GameState {
     Map map;
@@ -22,6 +23,7 @@ struct GameState {
     bool endGame = false;
     std::string winnerTeam;
     std::mutex mutex;
+    std::deque<std::string> _popMessages;
 };
 
 #endif /* !GAMESTATE_HPP_ */

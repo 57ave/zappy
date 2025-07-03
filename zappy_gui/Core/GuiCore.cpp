@@ -33,13 +33,13 @@ void GuiCore::processNetworkMsg()
     std::string msg;
 
     while (_network->tryPopMessage(msg)) {
-        _parser.parse(msg);
+        _parser.parse(msg, _gameState);
     }
 }
 
 void GuiCore::updateGameState()
 {
-    if (_parser.isEndGame()) {
+    if (_gameState.endGame == true) {
         _running = false;
     }
 }

@@ -14,26 +14,26 @@ static const std::string resourceNames[] = {
     "food", "linemate", "deraumere", "sibur", "mendiane", "phiras", "thystame"
 };
 
-void NetworkParser::addPopMessage(const std::string& msg)
+void NetworkParser::addPopMessage(const std::string& msg, GameState &gameState)
 {
     const size_t maxMessages = 10;
-    if (_popMessages.size() >= maxMessages) {
-        _popMessages.pop_front();
+    if (gameState._popMessages.size() >= maxMessages) {
+        gameState._popMessages.pop_front();
     }
-    _popMessages.push_back({msg});
+    gameState._popMessages.push_back({msg});
 }
 
-void NetworkParser::parse_msz(const std::string &message)
+void NetworkParser::parse_msz(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string msz;
     iss >> msz;
     int width, height;
     iss >> width >> height;
-    _map.resize(width, height);
+    gameState.map.resize(width, height);
 }
 
-void NetworkParser::parse_bct(const std::string &message)
+void NetworkParser::parse_bct(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string bct;
@@ -43,20 +43,20 @@ void NetworkParser::parse_bct(const std::string &message)
     iss >> x >> y;
     for (int &res : resources)
         iss >> res;
-    _map.at(x, y).setResources(resources);
+    gameState.map.at(x, y).setResources(resources);
 }
 
-void NetworkParser::parse_tna(const std::string &message)
+void NetworkParser::parse_tna(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string tna;
     std::string team_name;
     iss >> tna >> team_name;
     if (!team_name.empty())
-        _teams.push_back(team_name);
+        gameState.teams.push_back(team_name);
 }
 
-void NetworkParser::parse_pnw(const std::string &message)
+void NetworkParser::parse_pnw(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string pnw;
@@ -66,8 +66,8 @@ void NetworkParser::parse_pnw(const std::string &message)
     if (team_name.empty()) {
         return;
     }
-    _players.push_back(Player(id, team_name));
-    for (auto &player : _players) {
+    gameState.players.push_back(Player(id, team_name));
+    for (auto &player : gameState.players) {
         if (player.getId() == id) {
             player.setPosition(x, y, direction);
             player.setLevel(level);
@@ -76,13 +76,13 @@ void NetworkParser::parse_pnw(const std::string &message)
     }
 }
 
-void NetworkParser::parse_ppo(const std::string &message)
+void NetworkParser::parse_ppo(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string ppo;
     int id, x, y, direction;
     iss >> ppo >> id >> x >> y >> direction;
-    for (auto &player : _players) {
+    for (auto &player : gameState.players) {
         if (player.getId() == id) {
             player.setPosition(x, y, direction);
             return;
@@ -90,13 +90,13 @@ void NetworkParser::parse_ppo(const std::string &message)
     }
 }
 
-void NetworkParser::parse_plv(const std::string &message)
+void NetworkParser::parse_plv(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string plv;
     int id, level;
     iss >> plv >> id >> level;
-    for (auto &player : _players) {
+    for (auto &player : gameState.players) {
         if (player.getId() == id) {
             player.setLevel(level);
             return;
@@ -105,7 +105,7 @@ void NetworkParser::parse_plv(const std::string &message)
 
 }
 
-void NetworkParser::parse_pin(const std::string &message)
+void NetworkParser::parse_pin(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string pin;
@@ -114,7 +114,7 @@ void NetworkParser::parse_pin(const std::string &message)
     iss >> pin >> id >> x >> y;
     for (int &res : resources)
         iss >> res;
-    for (auto &player : _players) {
+    for (auto &player : gameState.players) {
         if (player.getId() == id) {
             player.setInventory(resources);
             break;
@@ -122,105 +122,105 @@ void NetworkParser::parse_pin(const std::string &message)
     }
 }
 
-void NetworkParser::parse_sgt(const std::string &message)
+void NetworkParser::parse_sgt(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string sgt;
     int time;
     iss >> sgt >> time;
-    _timeGame = time;
+    gameState.timeUnit = time;
 }
 
-void NetworkParser::parse_sst(const std::string &message)
+void NetworkParser::parse_sst(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string sgt;
     int time;
     iss >> sgt >> time;
-    _timeGame = time;
+    gameState.timeUnit = time;
 }
 
-void NetworkParser::parse_pgt(const std::string &message)
+void NetworkParser::parse_pgt(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string pgt;
     int id, resourceType;
     iss >> pgt >> id >> resourceType;
-    for (auto &player : _players) {
+    for (auto &player : gameState.players) {
         if (player.getId() == id) {
-            addPopMessage("Player " + std::to_string(id) + " is taking " + resourceNames[resourceType]);
+            addPopMessage("Player " + std::to_string(id) + " is taking " + resourceNames[resourceType], gameState);
         }
     }
 }
 
-void NetworkParser::parse_pdr(const std::string &message)
+void NetworkParser::parse_pdr(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string pdr;
     int id, resourceType;
     iss >> pdr >> id >> resourceType;
-    for (auto &player : _players) {
+    for (auto &player : gameState.players) {
         if (player.getId() == id) {
-            addPopMessage("Player " + std::to_string(id) + " is dropping " + resourceNames[resourceType]);
+            addPopMessage("Player " + std::to_string(id) + " is dropping " + resourceNames[resourceType], gameState);
         }
     }
 }
 
-void NetworkParser::parse_pfk(const std::string &message)
+void NetworkParser::parse_pfk(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string pfk;
     int id;
     iss >> pfk >> id;
-    for (auto &player : _players) {
+    for (auto &player : gameState.players) {
         if (player.getId() == id) {
-            addPopMessage("Egg laying by the player " + std::to_string(id));
+            addPopMessage("Egg laying by the player " + std::to_string(id), gameState);
         }
     }
 }
 
-void NetworkParser::parse_enw(const std::string &message)
+void NetworkParser::parse_enw(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string enw;
     int eggId, playerId, x, y;
     iss >> enw >> eggId >> playerId >> x >> y;
-    _eggs.push_back(Egg(eggId, playerId, x, y));
+    gameState.eggs.push_back(Egg(eggId, playerId, x, y));
     
-    for (auto &player : _players) {
-        if (player.getId() == _eggs.back().getPlayerId()) {
-            addPopMessage("Egg laying by the player " + std::to_string(_eggs.back().getPlayerId()));
+    for (auto &player : gameState.players) {
+        if (player.getId() == gameState.eggs.back().getPlayerId()) {
+            addPopMessage("Egg laying by the player " + std::to_string(gameState.eggs.back().getPlayerId()), gameState);
         }
     }
-    parse_pfk("pfk " + std::to_string(playerId) + "\n");
+    parse_pfk("pfk " + std::to_string(playerId) + "\n", gameState);
 }
 
-void NetworkParser::parse_ebo(const std::string &message)
+void NetworkParser::parse_ebo(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string ebo;
     int eggId;
     iss >> ebo >> eggId;
-    for (auto &egg : _eggs) {
+    for (auto &egg : gameState.eggs) {
         if (egg.getId() == eggId) {
-            addPopMessage("Egg " + std::to_string(eggId) + " is connected to player " + std::to_string(egg.getPlayerId()));
+            addPopMessage("Egg " + std::to_string(eggId) + " is connected to player " + std::to_string(egg.getPlayerId()), gameState);
             return;
         }
     }
 }
 
-void NetworkParser::parse_edi(const std::string &message)
+void NetworkParser::parse_edi(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string edi;
     int eggId;
     iss >> edi >> eggId;
-    _eggs.erase(std::remove_if(_eggs.begin(), _eggs.end(),
-        [eggId](const Egg &egg) { return egg.getId() == eggId; }), _eggs.end());
-    addPopMessage("Egg " + std::to_string(eggId) + " is dead");
+    gameState.eggs.erase(std::remove_if(gameState.eggs.begin(), gameState.eggs.end(),
+        [eggId](const Egg &egg) { return egg.getId() == eggId; }), gameState.eggs.end());
+    addPopMessage("Egg " + std::to_string(eggId) + " is dead", gameState);
 }
 
-void NetworkParser::parse_pbc(const std::string &message)
+void NetworkParser::parse_pbc(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string pbc;
@@ -228,75 +228,75 @@ void NetworkParser::parse_pbc(const std::string &message)
     std::string broadcastMessage;
     iss >> pbc >> id;
     std::getline(iss, broadcastMessage);
-    for (auto &player : _players) {
+    for (auto &player : gameState.players) {
         if (player.getId() == id) {
-            addPopMessage("Player " + std::to_string(id) + " is broadcast:\n" + broadcastMessage);
+            addPopMessage("Player " + std::to_string(id) + " is broadcast:\n" + broadcastMessage, gameState);
             return;
         }
     }
 }
 
-void NetworkParser::parse_pdi(const std::string &message)
+void NetworkParser::parse_pdi(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string pdi;
     int id;
     iss >> pdi >> id;
-    _players.erase(std::remove_if(_players.begin(), _players.end(),
-        [id](const Player &player) { return player.getId() == id; }), _players.end());
-    addPopMessage("Player " + std::to_string(id) + " is dead");
+    gameState.players.erase(std::remove_if(gameState.players.begin(), gameState.players.end(),
+        [id](const Player &player) { return player.getId() == id; }), gameState.players.end());
+    addPopMessage("Player " + std::to_string(id) + " is dead", gameState);
 }
 
-void NetworkParser::parse_pex(const std::string &message)
+void NetworkParser::parse_pex(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string pex;
     int id;
     iss >> pex >> id;
-    for (auto &player : _players) {
+    for (auto &player : gameState.players) {
         if (player.getId() == id) {
-            addPopMessage("Player " + std::to_string(id) + " has been ejected");
+            addPopMessage("Player " + std::to_string(id) + " has been ejected", gameState);
             return;
         }
     }
 }
 
-void NetworkParser::parse_seg(const std::string &message)
+void NetworkParser::parse_seg(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string seg;
     int id;
     iss >> seg >> id;
-    for (auto &player : _players) {
+    for (auto &player : gameState.players) {
         if (player.getId() == id) {
-            _winnerTeam = player.getTeam();
-            _endGame = true;
+            gameState.winnerTeam = player.getTeam();
+            gameState.endGame = true;
             return;
         }
     }
 }
 
-void NetworkParser::parse_smg(const std::string &message)
+void NetworkParser::parse_smg(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string smg;
     std::string msg;
     iss >> smg;
     std::getline(iss, msg);
-    addPopMessage("Server: " + msg);
+    addPopMessage("Server: " + msg, gameState);
 }
 
-void NetworkParser::parse_suc(const std::string &message)
+void NetworkParser::parse_suc(const std::string &message, GameState &gameState)
 {
-    addPopMessage("Unknown command");
+    addPopMessage("Unknown command", gameState);
 }
 
-void NetworkParser::parse_sbp(const std::string &message)
+void NetworkParser::parse_sbp(const std::string &message, GameState &gameState)
 {
-    addPopMessage("Command parameter");
+    addPopMessage("Command parameter", gameState);
 }
 
-void NetworkParser::parse_pic(const std::string &message)
+void NetworkParser::parse_pic(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string pic;
@@ -307,10 +307,10 @@ void NetworkParser::parse_pic(const std::string &message)
     while (iss >> id) {
         playerIds.push_back(id);
     }
-    addPopMessage("Player " + std::to_string(idPlayer1) + " start an incantation");
+    addPopMessage("Player " + std::to_string(idPlayer1) + " start an incantation", gameState);
 }
 
-void NetworkParser::parse_pie(const std::string &message)
+void NetworkParser::parse_pie(const std::string &message, GameState &gameState)
 {
     std::istringstream iss(message);
     std::string pie;
@@ -318,18 +318,19 @@ void NetworkParser::parse_pie(const std::string &message)
     std::string result;
     iss >> pie >> x >> y >> result;
     if (result == "ko") {
-        addPopMessage("Incantation failed");
+        addPopMessage("Incantation failed", gameState);
     } else {
-        addPopMessage("Incantation succeeded");
+        addPopMessage("Incantation succeeded", gameState);
     }
 }
 
-void NetworkParser::parse(const std::string &msg)
+void NetworkParser::parse(const std::string &msg, GameState &gameState)
 {
     std::istringstream iss(msg);
     std::string command;
     iss >> command;
-    static const std::unordered_map<std::string, std::function<void(NetworkParser*, const std::string&)>> cmd = {
+    using ParseFunc = void(NetworkParser::*)(const std::string&, GameState &);
+    static const std::unordered_map<std::string, ParseFunc> cmd = {
         {"msz", &NetworkParser::parse_msz},
         {"bct", &NetworkParser::parse_bct},
         {"tna", &NetworkParser::parse_tna},
@@ -358,8 +359,8 @@ void NetworkParser::parse(const std::string &msg)
 
     auto it = cmd.find(command);
     if (it != cmd.end()) {
-        it->second(this, msg);
+        (this->*(it->second))(msg, gameState);
     } else {
-        addPopMessage("Unhandled command: " + command);
+        addPopMessage("Unhandled command: " + command, gameState);
     }
 }
