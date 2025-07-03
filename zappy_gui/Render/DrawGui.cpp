@@ -291,8 +291,6 @@ void Render::drawPopMessages(const GameState &gameState) {
     }
 }
 
-
-// A droite au dessus du pop messages
 void Render::drawGlobalInfo(const GameState &gameState) {
     sf::RectangleShape infoBox(sf::Vector2f(300, 250));
     infoBox.setFillColor(sf::Color(200, 200, 200, 200));
