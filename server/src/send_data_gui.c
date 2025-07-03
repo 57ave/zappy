@@ -7,6 +7,7 @@
 #include "map.h"
 #include "server.h"
 #include "stdio.h"
+#include <stdarg.h>
 
 void send_map_size_to_gui(int gui_fd, map_t *map)
 {
@@ -33,14 +34,14 @@ void send_map_content_to_gui(int gui_fd, map_t *map)
     }
 }
 
-void send_players_to_gui(int gui_fd, server_t *server)
+static void send_players_to_gui(int gui_fd, server_t *server)
 {
     player_t *player = NULL;
 
     for (int i = 0; i < server->player_nb; i++) {
         player = server->players[i];
         dprintf(gui_fd, "pnw %d %d %d %d %d %s\n", player->id, player->x,
-            player->y, player->direction + 1, player->lvl, player->team);
+            player->y, player->dir + 1, player->lvl, player->team);
         dprintf(gui_fd, "pin %d %d %d %d %d %d %d %d %d %d\n",
             player->id, player->x, player->y,
             player->inventory[FOOD],
@@ -58,6 +59,17 @@ static void send_teams_to_gui(int gui_fd, server_config_t *config)
     for (int i = 0; i < config->team_nb; i++) {
         dprintf(gui_fd, "tna %s\n", config->teams[i].name);
     }
+}
+
+void send_gui(server_t *serv, const char *format, ...)
+{
+    va_list args;
+
+    if (serv->gui_fd == -1)
+        return;
+    va_start(args, format);
+    vdprintf(serv->gui_fd, format, args);
+    va_end(args);
 }
 
 void send_data_gui(server_t *server, int gui_fd, server_config_t *config)

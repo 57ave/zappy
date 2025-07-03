@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "server.h"
+#include <ctype.h>
 
 int parse_port(int i, int ac, char **av)
 {
@@ -18,9 +19,20 @@ int parse_port(int i, int ac, char **av)
     return -1;
 }
 
+static int is_valid_int(const char *str)
+{
+    if (!str || *str == '\0')
+        return 0;
+    for (int i = 0; str[i]; i++) {
+        if (!isdigit(str[i]))
+            return 0;
+    }
+    return 1;
+}
+
 int parse_world_size(int i, int ac, char **av)
 {
-    if (i + 1 < ac) {
+    if (i + 1 < ac && is_valid_int(av[i + 1])) {
         return atoi(av[i + 1]);
     }
     return -1;
@@ -50,11 +62,17 @@ int parse_begin(int ac, char **av, server_config_t *config, int i)
     }
     if (strcmp(av[i], "-x") == 0) {
         config->width = parse_world_size(i, ac, av);
+        if (config->width <= 0)
+            return -1;
         i++;
+        return i;
     }
     if (strcmp(av[i], "-y") == 0) {
         config->height = parse_world_size(i, ac, av);
+        if (config->height <= 0)
+            return -1;
         i++;
+        return i;
     }
     return i;
 }
@@ -72,22 +90,36 @@ static void init_teams(int ac, char **av, server_config_t *config, int i)
         }
 }
 
+static int check_freq(server_config_t *config)
+{
+    if (config->freq <= 0) {
+        printf("Error : Frequency must be > 0\n");
+        return -1;
+    }
+    config->tick_freq = 1000000 / config->freq;
+    return 0;
+}
+
 int parse_args(int ac, char **av, server_config_t *config)
 {
+    int res = 0;
+
     for (int i = 1; i < ac; i++) {
         i = parse_begin(ac, av, config, i);
+        if (i == -1)
+            return -1;
         if (strcmp(av[i], "-c") == 0) {
             config->nb_clients = parse_world_size(i, ac, av);
             i++;
         }
         if (strcmp(av[i], "-f") == 0) {
             config->freq = parse_world_size(i, ac, av);
-            config->tick_freq = 1000000 / config->freq;
+            res = check_freq(config);
             i++;
         }
     }
     for (int i = 1; i < ac; i++) {
         init_teams(ac, av, config, i);
     }
-    return 0;
+    return res;
 }
