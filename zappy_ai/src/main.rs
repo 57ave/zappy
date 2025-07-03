@@ -32,7 +32,7 @@ async fn main() -> Result<(), ClientError> {
     let args = Args::parse();
     let mut client = 
     client::ZappyClient::connect(&args.machine, args.port, &args.name, 100, args.debug).await?;
-
+    if client.debug {println!("Connected to server going to make decision");}
     make_decision(&mut client).await?;
     Ok(())
 }

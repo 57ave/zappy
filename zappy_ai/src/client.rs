@@ -3,8 +3,10 @@ use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use std::collections::{HashMap, VecDeque};
 use std::future::Future;
+use std::str;
 use std::time::{Duration, Instant};
 use crate::commands::{broadcast::BroadcastSystem, commands::{Command, Direction}};
+use crate::decision::decision_caller::handle_level_up;
 use crate::drone::inventory::{Inventory, Resource};
 use crate::drone::player_state::{self, PlayerState};
 use crate::error::ClientError;
@@ -204,9 +206,8 @@ impl ZappyClient {
     }
     
     pub async fn fork(&mut self) -> Result<bool, ClientError> {
-        if self.debug {
+        
             println!("Executing Fork command");
-        }
         let response = self.execute_command(Command::Fork).await?;
         Ok(response == "ok")
     }
@@ -227,11 +228,11 @@ impl ZappyClient {
         Ok(response == "ok")
     }
     
-    pub async fn set(&mut self, resource: Resource) -> Result<bool, ClientError> {
+    pub async fn set(&mut self, resource: &Resource) -> Result<bool, ClientError> {
         if self.debug {
             println!("Setting resource: {:?}", resource);
         }
-        let response = self.execute_command(Command::Set(resource)).await?;
+        let response = self.execute_command(Command::Set(resource.clone())).await?;
         Ok(response == "ok")
     }
     
@@ -283,8 +284,10 @@ impl ZappyClient {
             return Err(ClientError::InvalidResponse("Tile index must be 0-3".to_string()));
         }
 
-        let tile_str = look_result.get(index)
-            .ok_or(ClientError::InvalidResponse("Not enough tiles in look response".to_string()))?;
+        let tile_str = match look_result.get(index) {
+            Some(s) => s,
+            None => "",
+        };
 
         Ok(tile_str
             .split_whitespace()
@@ -394,13 +397,28 @@ pub async fn see_food(&mut self) -> Result<u32, ClientError> {
 }
 
 pub async fn see_priority_resource(&mut self) -> Result<bool, ClientError> {
-    const PRIORITY_RESOURCES: [&str; 4] = ["linemate", "deraumere", "sibur", "phiras"];
-    
+    let level_4_req = crate::drone::levels::get_level_requirements()
+        .into_iter()
+        .find(|r| r.level == 4)
+        .expect("Level 4 requirements should exist");
+    let inventory = self.inventory().await?;
+    let mut needs_resource = false;
+    for (resource, &count) in &level_4_req.resources {
+        if inventory.get_resource(resource) < count as i32 {
+            needs_resource = true;
+            break;
+        }
+    }
+    if !needs_resource {
+        return Ok(false);
+    }
+    let missing_resources: Vec<&String> = level_4_req.resources.iter()
+        .filter(|(resource, &count)| inventory.get_resource(resource) < count as i32)
+        .map(|(resource, _)| resource)
+        .collect();
     for i in 0..4 {
-        if self.get_look_tile(i).await?
-            .iter()
-            .any(|item| PRIORITY_RESOURCES.contains(&item.as_str()))
-        {
+        let tile = self.get_look_tile(i).await?;
+        if tile.iter().any(|item| missing_resources.iter().any(|res| res == &item)) {
             return Ok(true);
         }
     }
@@ -417,17 +435,43 @@ pub async fn has_level_requirements(&mut self) -> Result<bool, ClientError> {
         .find(|r| r.level == current_level + 1)
         .ok_or(ClientError::IncantationError("Wrong level".to_string()))?;
 
+    println!("Checking level requirements for level {}", current_level + 1);
+
     let inventory = self.inventory().await?;
     let has_inventory_resources = requirements.resources.iter()
         .all(|(resource, &count)| inventory.get_resource(resource) >= count.try_into().unwrap());
 
     if !has_inventory_resources {
+        println!(
+            "Inventory does not have required resources for level {}: required {:?}, have {:?}",
+            current_level + 1,
+            requirements.resources,
+            inventory
+        );
         return Ok(false);
+    } else {
+        println!(
+            "Inventory has required resources for level {}: required {:?}, have {:?}",
+            current_level + 1,
+            requirements.resources,
+            inventory
+        );
+    }
+    for (resource_str, count) in &requirements.resources {
+        let resource = Resource::from_string(resource_str)
+            .ok_or_else(|| ClientError::ResourceError(format!("Unknown resource: {}", resource_str)))?;
+        
+        let inv_count = inventory.get_resource(resource_str);
+        let drop_count = (*count as i32).min(inv_count);
+        
+        for _ in 0..drop_count {
+            self.set(&resource).await?;
+        }
     }
 
     let current_tile: Vec<String> = self.get_look_tile(0).await?;
 
-    let mut tile_resources = HashMap::new();
+    let mut tile_resources = std::collections::HashMap::new();
     for resource in &current_tile {
         *tile_resources.entry(resource.to_string()).or_insert(0) += 1;
     }
@@ -436,14 +480,33 @@ pub async fn has_level_requirements(&mut self) -> Result<bool, ClientError> {
         .all(|(resource, count)| tile_resources.get(resource).unwrap_or(&0) >= count);
 
     if !has_tile_resources {
+        println!(
+            "Tile does not have required resources for level {}: required {:?}, have {:?}",
+            current_level + 1,
+            requirements.resources,
+            tile_resources
+        );
         return Ok(false);
+    } else {
+        println!(
+            "Tile has required resources for level {}: required {:?}, have {:?}",
+            current_level + 1,
+            requirements.resources,
+            tile_resources
+        );
     }
 
     let players_on_tile = current_tile.iter()
         .filter(|&r| r == "player")
         .count();
 
-    Ok(players_on_tile >= requirements.required_players as usize)
+    println!(
+        "Players on tile: {}, required: {}",
+        players_on_tile,
+        requirements.required_players
+    );
+
+    Ok(players_on_tile >= (requirements.required_players) as usize)
 }
 
 pub async fn get_level(&mut self) -> Result<u32, ClientError> {
@@ -451,13 +514,7 @@ pub async fn get_level(&mut self) -> Result<u32, ClientError> {
 }
 
 //position
-pub async fn handle_level_up(&mut self) -> Result<(), ClientError> {
-    if self.has_level_requirements().await? {
-        self.incantation().await?;
-        self.player_state.set_level(self.player_state.get_level() + 1);
-    }
-    Ok(())
-}
+
 pub async fn move_to_position(&mut self, target: Position) -> Result<(), ClientError> {
     let current = self.player_state.get_position();
     let delta = self.calculate_movement_delta(current, target).await?;
@@ -589,17 +646,16 @@ async fn face_direction(&mut self, dir: Direction) -> Result<(), ClientError> {
                 }
                 sleep(Duration::from_millis(50)).await;
             }
-
-            if responders >= requirements.required_players - 1 {
-                return self.handle_level_up().await;
-            }
         }
         Ok(())
     }
 
     pub async fn process_broadcasts(&mut self) -> Result<(), ClientError> {
         let messages = self.check_messages().await?;
-        for message in messages {
+        if self.debug {
+            println!("Has checks message: {:?}", messages);
+        }
+        if let Some(message) = messages {
             self.broadcast.handle_broadcast(&message, self.player_state.get_position()).await;
         }
         Ok(())

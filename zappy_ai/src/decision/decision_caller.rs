@@ -11,7 +11,6 @@ use super::{Priority, Action};
 
 pub async fn make_decision(client: &mut ZappyClient) -> Result<(), ClientError> {
     let decision_tree = DecisionTree::new();
-    client.process_broadcasts().await?;
 
     loop {
         let (priority, action) = decision_tree.evaluate(client).await;
@@ -23,16 +22,16 @@ pub async fn make_decision(client: &mut ZappyClient) -> Result<(), ClientError> 
                 handle_resource_collection(client).await?;
             },
             (Priority::Critical, Action::LevelUp) => {
-                client.handle_level_up().await?;
+                handle_level_up(client).await?;
             },
-            (_, Action::LayEgg) => {
-                client.fork().await?;
+            (Priority::High, Action::LayEgg) => {
+                handle_lay_egg(client).await?;
             }
             (_, Action::Explore) => {
                 handle_exploration(client).await?;
             },
             (Priority::High, Action::JoinTeam) => {
-                
+                handle_join_team(client).await?;
             },
             (Priority::High, Action::MaintainFood) => {
                 handle_maintain_food_supply(client).await?;
@@ -42,9 +41,23 @@ pub async fn make_decision(client: &mut ZappyClient) -> Result<(), ClientError> 
             },
             
         }
+        client.process_broadcasts().await?;
         if client.debug {println!("\n---");}
         client.reset_look_cache();
     }
+}
+
+pub async fn handle_lay_egg(client: &mut ZappyClient) -> Result<(), ClientError> {
+    client.fork().await?;
+    Ok(())
+}
+
+pub async fn handle_level_up(client: &mut ZappyClient) -> Result<(), ClientError> {
+    if client.has_level_requirements().await? {
+        client.incantation().await?;
+        client.player_state.set_level(client.player_state.get_level() + 1);
+    }
+    Ok(())
 }
 
 async fn handle_food_search(client: &mut ZappyClient) -> Result<(), ClientError> {

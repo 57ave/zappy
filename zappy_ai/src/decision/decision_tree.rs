@@ -48,12 +48,12 @@ impl DecisionNode for FoodNode {
                 if let Some(next) = &self.next {
                     next.evaluate(client).await
                 } else {
-                    (Priority::Low, Action::Wait)
+                    (Priority::Critical, Action::LevelUp)
                 }
             }
             Err(e) => {
                 eprintln!("Error checking food: {:?}", e);
-                (Priority::Low, Action::Wait)
+                (Priority::Critical, Action::LayEgg)
             }
         }
     }
@@ -62,14 +62,30 @@ impl DecisionNode for FoodNode {
 #[async_trait]
 impl DecisionNode for ResourceNode {
     async fn evaluate(&self, client: &mut ZappyClient) -> (Priority, Action) {
-        let _inventory = client.inventory().await.unwrap();
-        if let Ok(true) = client.see_priority_resource().await {
+        let current_level = client.get_level().await.unwrap_or(1);
+        if current_level < 4 {
+            let level_4_req = crate::drone::levels::get_level_requirements()
+                .into_iter()
+                .find(|r| r.level == 4)
+                .expect("Level 4 requirements should exist");
+            let inventory = client.inventory().await.unwrap();
+            let has_all = level_4_req.resources.iter()
+                .all(|(resource, &count)| inventory.get_resource(resource) >= count as i32);
+            if has_all {
+                return (Priority::Critical, Action::LevelUp);
+            }
+            if let Ok(true) = client.see_priority_resource().await {
+                return (Priority::High, Action::CollectResource);
+            }
+        }
+        let inventory = client.inventory().await.unwrap();
+        if inventory.get_resource("food") > 0 {
             return (Priority::High, Action::CollectResource);
         }
         if let Some(next) = &self.next {
             next.evaluate(client).await
         } else {
-            (Priority::Low, Action::LayEgg)
+            (Priority::High, Action::LayEgg)
         }
     }
 }
@@ -79,7 +95,7 @@ impl DecisionNode for LevelUpNode {
     async fn evaluate(&self, client: &mut ZappyClient) -> (Priority, Action) {
         let current_level = match client.get_level().await {
             Ok(level) => level,
-            Err(_) => return (Priority::Low, Action::Wait),
+            Err(_) => return (Priority::High, Action::LayEgg),
         };
 
         match client.coordinate_level_up().await {
@@ -154,9 +170,9 @@ impl DecisionTree {
     }
     pub async fn evaluate(&self, client: &mut ZappyClient) -> (Priority, Action) {
         let (priority, action) = self.root.evaluate(client).await;
-        if client.debug {
+        
             println!("Decision: {:?}, {:?}", priority, action);
-        }
+        
         (priority, action)
     }
 } 
