@@ -38,6 +38,17 @@ int parse_world_size(int i, int ac, char **av)
     return -1;
 }
 
+static int duplicate_teams(char **teams, int team_nb, int i)
+{
+    for (int j = i + 1; j < team_nb; j++) {
+        if (strcmp(teams[i], teams[j]) == 0) {
+            printf("Error: Duplicate team : %s\n", teams[i]);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 char **parse_teams(int i, int ac, char **av, int *team_nb)
 {
     int start = i + 1;
@@ -48,8 +59,16 @@ char **parse_teams(int i, int ac, char **av, int *team_nb)
     }
     *team_nb = start - (i + 1);
     teams = malloc(*team_nb * sizeof(char *));
+    if (!teams)
+        return NULL;
     for (int j = 0; j < *team_nb; j++) {
         teams[j] = av[i + 1 + j];
+    }
+    for (int i = 0; i < *team_nb; i++) {
+        if (duplicate_teams(teams, *team_nb, i)) {
+            free(teams);
+            return NULL;
+        }
     }
     return teams;
 }
@@ -80,14 +99,18 @@ int parse_begin(int ac, char **av, server_config_t *config, int i)
 static void init_teams(int ac, char **av, server_config_t *config, int i)
 {
     if (strcmp(av[i], "-n") == 0) {
-            config->team_name = parse_teams(i, ac, av, &config->team_nb);
-            config->teams = malloc(sizeof(team_t) * config->team_nb);
-            for (int j = 0; j < config->team_nb; j++) {
-                config->teams[j].name = strdup(config->team_name[j]);
-                config->teams[j].max_players = config->nb_clients;
-                config->teams[j].actual_players = 0;
-            }
+        config->team_name = parse_teams(i, ac, av, &config->team_nb);
+        if (!config->team_name) {
+            config->team_nb = 0;
+            return;
         }
+        config->teams = malloc(sizeof(team_t) * config->team_nb);
+        for (int j = 0; j < config->team_nb; j++) {
+            config->teams[j].name = strdup(config->team_name[j]);
+            config->teams[j].max_players = config->nb_clients;
+            config->teams[j].actual_players = 0;
+        }
+    }
 }
 
 static int check_freq(server_config_t *config)
