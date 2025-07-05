@@ -27,35 +27,40 @@ pub async fn make_decision(client: &mut ZappyClient) -> Result<(), ClientError> 
             (Priority::High, Action::LayEgg) => {
                 handle_lay_egg(client).await?;
             }
-            (_, Action::Explore) => {
-                handle_exploration(client).await?;
-            },
             (Priority::High, Action::JoinTeam) => {
                 handle_join_team(client).await?;
             },
             (Priority::High, Action::MaintainFood) => {
                 handle_maintain_food_supply(client).await?;
             },
-            (_) => {
+            (Priority::Low, Action::Explore) => {
                 handle_exploration(client).await?;
             },
+            (_) => {
+                println!("No action taken, waiting...");
+                sleep(Duration::from_secs(1)).await;
+            }
             
         }
         client.process_broadcasts().await?;
-        if client.debug {println!("\n---");}
+        println!("\n---");
         client.reset_look_cache();
     }
 }
 
 pub async fn handle_lay_egg(client: &mut ZappyClient) -> Result<(), ClientError> {
     client.fork().await?;
+    println!("has laid an egg");
     Ok(())
 }
 
 pub async fn handle_level_up(client: &mut ZappyClient) -> Result<(), ClientError> {
     if client.has_level_requirements().await? {
+        println!("\n\n---\nHas level up\n\n---\n\n\n");
         client.incantation().await?;
         client.player_state.set_level(client.player_state.get_level() + 1);
+    } else {
+        handle_lay_egg(client).await?;
     }
     Ok(())
 }

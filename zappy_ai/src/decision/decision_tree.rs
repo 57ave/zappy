@@ -48,12 +48,12 @@ impl DecisionNode for FoodNode {
                 if let Some(next) = &self.next {
                     next.evaluate(client).await
                 } else {
-                    (Priority::Critical, Action::LevelUp)
+                    (Priority::Critical, Action::CollectResource)
                 }
             }
             Err(e) => {
                 eprintln!("Error checking food: {:?}", e);
-                (Priority::Critical, Action::LayEgg)
+                (Priority::High, Action::LayEgg)
             }
         }
     }
@@ -63,29 +63,28 @@ impl DecisionNode for FoodNode {
 impl DecisionNode for ResourceNode {
     async fn evaluate(&self, client: &mut ZappyClient) -> (Priority, Action) {
         let current_level = client.get_level().await.unwrap_or(1);
+        let inventory = client.inventory().await.unwrap_or_default();
         if current_level < 4 {
             let level_4_req = crate::drone::levels::get_level_requirements()
                 .into_iter()
                 .find(|r| r.level == 4)
                 .expect("Level 4 requirements should exist");
-            let inventory = client.inventory().await.unwrap();
+            
             let has_all = level_4_req.resources.iter()
                 .all(|(resource, &count)| inventory.get_resource(resource) >= count as i32);
             if has_all {
-                return (Priority::Critical, Action::LevelUp);
-            }
-            if let Ok(true) = client.see_priority_resource().await {
-                return (Priority::High, Action::CollectResource);
+                if let Ok(true) = client.has_level_requirements().await {
+                    return (Priority::Critical, Action::LevelUp);
+                }
             }
         }
-        let inventory = client.inventory().await.unwrap();
-        if inventory.get_resource("food") > 0 {
+        if inventory.food > 8 {
             return (Priority::High, Action::CollectResource);
         }
         if let Some(next) = &self.next {
             next.evaluate(client).await
         } else {
-            (Priority::High, Action::LayEgg)
+            (Priority::Low, Action::Explore)
         }
     }
 }
@@ -99,12 +98,12 @@ impl DecisionNode for LevelUpNode {
         };
 
         match client.coordinate_level_up().await {
-            Ok(_) => (Priority::Critical, Action::Wait),
+            Ok(_) => (Priority::Critical, Action::JoinTeam),
             Err(_) => {
                 if let Some(next) = &self.next {
                     next.evaluate(client).await
                 } else {
-                    (Priority::High, Action::CollectResource)
+                    (Priority::High, Action::LayEgg)
                 }
             }
         }
@@ -122,7 +121,7 @@ impl DecisionNode for JoinNode {
             match client.does_need_help(&message).await {
                 Ok(Some((target_level, _position))) => {
                     if client.should_respond_to_help(target_level).await.unwrap_or(false) {
-                        return (Priority::Critical, Action::JoinTeam);
+                        return (Priority::High, Action::JoinTeam);
                     }
                 }
                 Ok(None) => (),
@@ -137,7 +136,7 @@ impl DecisionNode for JoinNode {
         if let Some(next) = &self.next {
             next.evaluate(client).await
         } else {
-            (Priority::Low, Action::Explore)
+            (Priority::High, Action::LayEgg)
         }
     }
 }
@@ -145,9 +144,6 @@ impl DecisionNode for JoinNode {
 
 impl DecisionTree {
     pub fn new() -> Self {
-        let level_node = DecisionNodeEnum::LevelUp(LevelUpNode {
-            next: None,
-        });
         let level_node = DecisionNodeEnum::LevelUp(LevelUpNode {
             next: None,
         });
@@ -169,10 +165,8 @@ impl DecisionTree {
         }
     }
     pub async fn evaluate(&self, client: &mut ZappyClient) -> (Priority, Action) {
-        let (priority, action) = self.root.evaluate(client).await;
-        
-            println!("Decision: {:?}, {:?}", priority, action);
-        
-        (priority, action)
+            let action: (Priority, Action) = self.root.evaluate(client).await;
+            println!("Decision [{:?}]: {:?}", action.0, action.1);
+            action
     }
 } 

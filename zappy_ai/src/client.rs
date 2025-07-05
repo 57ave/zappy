@@ -442,20 +442,7 @@ pub async fn has_level_requirements(&mut self) -> Result<bool, ClientError> {
         .all(|(resource, &count)| inventory.get_resource(resource) >= count.try_into().unwrap());
 
     if !has_inventory_resources {
-        println!(
-            "Inventory does not have required resources for level {}: required {:?}, have {:?}",
-            current_level + 1,
-            requirements.resources,
-            inventory
-        );
         return Ok(false);
-    } else {
-        println!(
-            "Inventory has required resources for level {}: required {:?}, have {:?}",
-            current_level + 1,
-            requirements.resources,
-            inventory
-        );
     }
     for (resource_str, count) in &requirements.resources {
         let resource = Resource::from_string(resource_str)
@@ -480,20 +467,7 @@ pub async fn has_level_requirements(&mut self) -> Result<bool, ClientError> {
         .all(|(resource, count)| tile_resources.get(resource).unwrap_or(&0) >= count);
 
     if !has_tile_resources {
-        println!(
-            "Tile does not have required resources for level {}: required {:?}, have {:?}",
-            current_level + 1,
-            requirements.resources,
-            tile_resources
-        );
         return Ok(false);
-    } else {
-        println!(
-            "Tile has required resources for level {}: required {:?}, have {:?}",
-            current_level + 1,
-            requirements.resources,
-            tile_resources
-        );
     }
 
     let players_on_tile = current_tile.iter()
