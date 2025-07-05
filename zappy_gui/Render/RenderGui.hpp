@@ -45,6 +45,7 @@ class Render : public IRender {
         void drawGame(const GameState &gameState);
         void drawMap(const GameState &gameState);
         void drawTopBar(const GameState &gameState);
+        void drawTime(const GameState &gameState);
         void drawEggs(const GameState &gameState);
         void drawPlayers(const GameState &gameState);
         void drawResources(const GameState &gameState);
