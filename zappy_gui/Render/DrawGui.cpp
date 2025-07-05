@@ -206,6 +206,27 @@ void Render::drawPlayers(const GameState &gameState) {
         float posY = originY + y * tileHeight;
         sprite.setPosition(posX, posY);
         _window->draw(sprite);
+        //mouse hover to show player info
+        sf::Vector2i mousePos = sf::Mouse::getPosition(*_window);
+        if (sprite.getGlobalBounds().contains(static_cast<sf::Vector2f>(mousePos))) {
+            sf::RectangleShape playerInfoBox(sf::Vector2f(210, 100));
+            playerInfoBox.setFillColor(sf::Color(200, 200, 200, 200));
+            playerInfoBox.setPosition(posX + 10, posY + 10);
+            _window->draw(playerInfoBox);
+            sf::Text playerInfo("Id: " + std::to_string(player.getId()) +
+                                " Lvl: " + std::to_string(player.getLevel()) +
+                                " Inv: food(" + std::to_string(player.getInventory()[0]) +
+                                ")\nlin.(" + std::to_string(player.getInventory()[1]) +
+                                ") der.(" + std::to_string(player.getInventory()[2]) +
+                                ") sib.(" + std::to_string(player.getInventory()[3]) +
+                                ")\nmend.(" + std::to_string(player.getInventory()[4]) +
+                                ") phi.(" + std::to_string(player.getInventory()[5]) +
+                                ") thy.(" + std::to_string(player.getInventory()[6]) + ")",
+                                _font, 20);
+            playerInfo.setFillColor(sf::Color::Black);
+            playerInfo.setPosition(posX + 15, posY + 15);
+            _window->draw(playerInfo);
+        }
     }
 }
 
