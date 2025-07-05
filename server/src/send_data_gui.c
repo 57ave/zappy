@@ -72,8 +72,16 @@ void send_gui(server_t *serv, const char *format, ...)
     va_end(args);
 }
 
+static void send_frequency_to_gui(server_t *server)
+{
+    if (server->gui_fd == -1)
+        return;
+    dprintf(server->gui_fd, "sgt %d\n", server->config->freq);
+}
+
 void send_data_gui(server_t *server, int gui_fd, server_config_t *config)
 {
+    send_frequency_to_gui(server);
     send_map_size_to_gui(gui_fd, server->map);
     send_map_content_to_gui(gui_fd, server->map);
     send_players_to_gui(gui_fd, server);
