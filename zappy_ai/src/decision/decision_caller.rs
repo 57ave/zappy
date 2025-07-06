@@ -43,7 +43,6 @@ pub async fn make_decision(client: &mut ZappyClient) -> Result<(), ClientError> 
             
         }
         client.process_broadcasts().await?;
-        println!("\n---");
         client.reset_look_cache();
     }
 }
@@ -56,7 +55,7 @@ pub async fn handle_lay_egg(client: &mut ZappyClient) -> Result<(), ClientError>
 
 pub async fn handle_level_up(client: &mut ZappyClient) -> Result<(), ClientError> {
     if client.has_level_requirements().await? {
-        println!("\n\n---\nHas level up\n\n---\n\n\n");
+        println!("\n\n---\nHas level up\n---\n\n\n");
         client.incantation().await?;
         client.player_state.set_level(client.player_state.get_level() + 1);
     } else {
@@ -67,11 +66,9 @@ pub async fn handle_level_up(client: &mut ZappyClient) -> Result<(), ClientError
 
 async fn handle_food_search(client: &mut ZappyClient) -> Result<(), ClientError> {
     client.get_look_cached().await?;
-    
     if client.move_to_food().await? {
         client.take(Resource::Food).await?;
-    } else {
-        handle_exploration(client).await?;
+        return Ok(());
     }
     Ok(())
 }
