@@ -43,7 +43,8 @@ impl DecisionNode for DecisionNodeEnum {
 impl DecisionNode for FoodNode {
     async fn evaluate(&self, client: &mut ZappyClient) -> (Priority, Action) {
         match client.see_food().await {
-            Ok(food_count) if food_count < self.food_threshold => (Priority::High, Action::FindFood),
+            Ok(food_count) if food_count < self.food_threshold => {println!("Not enough food: {}", food_count );
+                (Priority::High, Action::FindFood)},
             Ok(_) => {
                 if let Some(next) = &self.next {
                     next.evaluate(client).await
@@ -53,7 +54,8 @@ impl DecisionNode for FoodNode {
             }
             Err(e) => {
                 eprintln!("Error checking food: {:?}", e);
-                (Priority::High, Action::LayEgg)
+                (Priority::Low, Action::Wait)
+
             }
         }
     }
@@ -92,13 +94,9 @@ impl DecisionNode for ResourceNode {
 #[async_trait]
 impl DecisionNode for LevelUpNode {
     async fn evaluate(&self, client: &mut ZappyClient) -> (Priority, Action) {
-        let current_level = match client.get_level().await {
-            Ok(level) => level,
-            Err(_) => return (Priority::High, Action::LayEgg),
-        };
 
         match client.coordinate_level_up().await {
-            Ok(_) => (Priority::Critical, Action::JoinTeam),
+            Ok(_) => (Priority::High, Action::JoinTeam),
             Err(_) => {
                 if let Some(next) = &self.next {
                     next.evaluate(client).await
@@ -120,11 +118,13 @@ impl DecisionNode for JoinNode {
         if let Ok(Some(message)) = client.check_messages().await {
             match client.does_need_help(&message).await {
                 Ok(Some((target_level, _position))) => {
-                    if client.should_respond_to_help(target_level).await.unwrap_or(false) {
+                    if client.respond_to_help(target_level).await.is_ok() {
                         return (Priority::High, Action::JoinTeam);
                     }
+                    return (Priority::High, Action::LayEgg);
                 }
-                Ok(None) => (),
+                Ok(None) => 
+                return (Priority::High, Action::LayEgg),
                 Err(e) => {
                     if client.debug {
                         eprintln!("Error parsing help message: {:?}", e);
@@ -132,20 +132,29 @@ impl DecisionNode for JoinNode {
                 }
             }
         }
+        (Priority::High, Action::LayEgg)
+    }
+}
 
-        if let Some(next) = &self.next {
-            next.evaluate(client).await
-        } else {
+pub struct LayEggNode {
+    next: Option<Box<DecisionNodeEnum>>,
+}
+
+#[async_trait]
+impl DecisionNode for LayEggNode {
+    async fn evaluate(&self, client: &mut ZappyClient) -> (Priority, Action) {
             (Priority::High, Action::LayEgg)
-        }
     }
 }
 
 
 impl DecisionTree {
     pub fn new() -> Self {
-        let level_node = DecisionNodeEnum::LevelUp(LevelUpNode {
+        let lay_egg_node = DecisionNodeEnum::LevelUp(LevelUpNode {
             next: None,
+        });
+        let level_node = DecisionNodeEnum::LevelUp(LevelUpNode {
+            next: Some(Box::new(lay_egg_node)),
         });
         let resource_node = DecisionNodeEnum::Resource(ResourceNode {
             resource_priority: vec![
@@ -165,8 +174,6 @@ impl DecisionTree {
         }
     }
     pub async fn evaluate(&self, client: &mut ZappyClient) -> (Priority, Action) {
-            let action: (Priority, Action) = self.root.evaluate(client).await;
-            println!("Decision [{:?}]: {:?}", action.0, action.1);
-            action
+            self.root.evaluate(client).await
     }
 } 
