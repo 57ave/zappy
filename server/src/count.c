@@ -13,6 +13,8 @@ int count_players_on_tile(server_t *server, int x, int y)
     int player_count = 0;
 
     for (int i = 0; i < server->player_nb; i++) {
+        if (!server->players[i])
+            continue;
         if (server->players[i]->x == x && server->players[i]->y == y)
             player_count++;
     }
