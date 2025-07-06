@@ -43,6 +43,8 @@ void NetworkParser::parse_bct(const std::string &message, GameState &gameState)
     iss >> x >> y;
     for (int &res : resources)
         iss >> res;
+    if (gameState.map.getWidth() == 0 || gameState.map.getHeight() == 0)
+        return; 
     gameState.map.at(x, y).setResources(resources);
 }
 

@@ -53,7 +53,9 @@ impl DecisionNode for FoodNode {
                 }
             }
             Err(e) => {
-                eprintln!("Error checking food: {:?}", e);
+                if client.debug {
+                    eprintln!("Error checking food: {:?}", e);
+                }
                 (Priority::Low, Action::Wait)
 
             }

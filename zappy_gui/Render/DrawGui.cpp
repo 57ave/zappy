@@ -67,6 +67,7 @@ void Render::drawGame(const GameState &gameState) {
     drawPopMessages(gameState);
     drawGlobalInfo(gameState);
     drawTopBar(gameState);
+    drawTime(gameState);
 }
 
 void Render::drawMap(const GameState &gameState) {
@@ -105,16 +106,6 @@ void Render::drawTopBar(const GameState &gameState) {
     title.setPosition(10, 15);
     _window->draw(title);
 
-    sf::Text timerText("", _font, 30);
-    int minutes = gameState.timeUnit / 60;
-    if (gameState.timeUnit <= 60)
-        timerText.setString("Timer: " + std::to_string(gameState.timeUnit) + "s");
-    else
-        timerText.setString("Timer: " + std::to_string(minutes) + "m " + std::to_string(gameState.timeUnit % 60) + "s");
-    timerText.setFillColor(sf::Color::Black);
-    timerText.setPosition(_window->getSize().x - 250, 15);
-    _window->draw(timerText);
-
     for (size_t i = 0; i < gameState.teams.size(); ++i) {
         sf::Text teamText(gameState.teams[i], _font, 30);
         teamText.setFillColor(sf::Color(((i+1) * 100) % 255, ((i+1) * 50) % 255, ((i+1) * 150) % 255));
@@ -150,6 +141,31 @@ void Render::drawTopBar(const GameState &gameState) {
             }
         }
     }
+}
+
+void Render::drawTime(const GameState &gameState) {
+    static sf::Clock gameClock;
+    static float virtualSeconds = 0.0f;
+    float tickDuration = 1.0f / static_cast<float>(gameState.timeUnit);
+
+    while (gameClock.getElapsedTime().asSeconds() >= tickDuration) {
+        virtualSeconds += 1.0f;
+        gameClock.restart();
+    }
+    int minutes = static_cast<int>(virtualSeconds) / 60;
+    int seconds = static_cast<int>(virtualSeconds) % 60;
+    sf::Text timerText("", _font, 30);
+    if (minutes == 0)
+        timerText.setString("Timer: " + std::to_string(seconds) + "s");
+    else if (minutes > 0 && minutes < 60)
+        timerText.setString("Timer: " + std::to_string(minutes) + "m " + std::to_string(seconds) + "s");
+    else
+        timerText.setString("Timer: " + std::to_string(minutes / 60) + "h " +
+                            std::to_string((minutes % 60)) + "m " +
+                            std::to_string(seconds) + "s");
+    timerText.setFillColor(sf::Color::Black);
+    timerText.setPosition(_window->getSize().x - 250, 15);
+    _window->draw(timerText);
 }
 
 void Render::drawEggs(const GameState &gameState) {
@@ -206,6 +222,27 @@ void Render::drawPlayers(const GameState &gameState) {
         float posY = originY + y * tileHeight;
         sprite.setPosition(posX, posY);
         _window->draw(sprite);
+        //mouse hover to show player info
+        sf::Vector2i mousePos = sf::Mouse::getPosition(*_window);
+        if (sprite.getGlobalBounds().contains(static_cast<sf::Vector2f>(mousePos))) {
+            sf::RectangleShape playerInfoBox(sf::Vector2f(210, 100));
+            playerInfoBox.setFillColor(sf::Color(200, 200, 200, 200));
+            playerInfoBox.setPosition(posX + 10, posY + 10);
+            _window->draw(playerInfoBox);
+            sf::Text playerInfo("Id: " + std::to_string(player.getId()) +
+                                " Lvl: " + std::to_string(player.getLevel()) +
+                                " Inv: food(" + std::to_string(player.getInventory()[0]) +
+                                ")\nlin.(" + std::to_string(player.getInventory()[1]) +
+                                ") der.(" + std::to_string(player.getInventory()[2]) +
+                                ") sib.(" + std::to_string(player.getInventory()[3]) +
+                                ")\nmend.(" + std::to_string(player.getInventory()[4]) +
+                                ") phi.(" + std::to_string(player.getInventory()[5]) +
+                                ") thy.(" + std::to_string(player.getInventory()[6]) + ")",
+                                _font, 20);
+            playerInfo.setFillColor(sf::Color::Black);
+            playerInfo.setPosition(posX + 15, posY + 15);
+            _window->draw(playerInfo);
+        }
     }
 }
 

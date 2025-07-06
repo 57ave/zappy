@@ -7,6 +7,7 @@
 
 #include "server.h"
 #include <stdio.h>
+#include <string.h>
 
 static int check_arguments(int ac)
 {
@@ -55,6 +56,7 @@ int main(int ac, char **av)
     server_t *server = malloc(sizeof(server_t));
     server_config_t config = {0};
 
+    memset(server, 0, sizeof(server_t));
     if (!server || check_arguments(ac) != SUCCESS) {
         return FAILURE;
     }
@@ -64,6 +66,7 @@ int main(int ac, char **av)
     server->port = config.port;
     create_server(server);
     server->map = malloc(sizeof(map_t));
+    memset(server->map, 0, sizeof(map_t));
     init_map(server->map, config.width, config.height);
     generate_resources(server->map);
     if (launch_server(server, &config))
