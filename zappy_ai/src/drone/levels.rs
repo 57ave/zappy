@@ -23,36 +23,36 @@ impl LevelRequirement {
 
 pub fn get_level_requirements() -> Vec<LevelRequirement> {
     vec![
-        LevelRequirement::new(1, 1, vec![("linemate", 1)]),
-        LevelRequirement::new(2, 2, vec![
+        LevelRequirement::new(2, 1, vec![("linemate", 1)]),
+        LevelRequirement::new(3, 2, vec![
             ("linemate", 1),
             ("deraumere", 1),
             ("sibur", 1),
         ]),
-        LevelRequirement::new(3, 2, vec![
+        LevelRequirement::new(4, 2, vec![
             ("linemate", 2),
             ("sibur", 1),
             ("phiras", 2),
         ]),
-        LevelRequirement::new(4, 4, vec![
+        LevelRequirement::new(5, 4, vec![
             ("linemate", 1),
             ("deraumere", 1),
             ("sibur", 2),
             ("phiras", 1),
         ]),
-        LevelRequirement::new(5, 4, vec![
+        LevelRequirement::new(6, 4, vec![
             ("linemate", 1),
             ("deraumere", 2),
             ("sibur", 1),
             ("mendiane", 3),
         ]),
-        LevelRequirement::new(6, 6, vec![
+        LevelRequirement::new(7, 6, vec![
             ("linemate", 1),
             ("deraumere", 2),
             ("sibur", 3),
             ("phiras", 1),
         ]),
-        LevelRequirement::new(7, 6, vec![
+        LevelRequirement::new(8, 6, vec![
             ("linemate", 2),
             ("deraumere", 2),
             ("sibur", 2),

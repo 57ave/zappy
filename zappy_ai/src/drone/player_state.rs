@@ -3,7 +3,7 @@ use crate::{client::Position, commands::commands::Direction, drone::inventory::I
 #[derive(Debug, Clone)]
 pub struct PlayerState {
     level: u32,
-    position: Position,
+    pub(crate) position: Position,
     direction: Direction,
     inventory: Inventory,
 }

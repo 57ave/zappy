@@ -1,9 +1,12 @@
 use tokio::net::TcpStream;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
-use std::collections::HashMap;
-use std::time::Duration;
-use crate::commands::commands::{Command, Direction};
+use std::collections::{HashMap, VecDeque};
+use std::future::Future;
+use std::str;
+use std::time::{Duration, Instant};
+use crate::commands::{broadcast::BroadcastSystem, commands::{Command, Direction}};
+use crate::decision::decision_caller::handle_level_up;
 use crate::drone::inventory::{Inventory, Resource};
 use crate::drone::player_state::{self, PlayerState};
 use crate::error::ClientError;
@@ -15,14 +18,18 @@ use crate::drone::levels;
 pub struct ZappyClient {
     reader: BufReader<OwnedReadHalf>,
     writer: BufWriter<OwnedWriteHalf>,
-    team_name: String,
+    pub team_name: String,
     client_num: i32,
     map_width: usize,
     map_height: usize,
     freq: u32,
     pub debug: bool,
     pub last_look: Option<Vec<String>>,
-    player_state: PlayerState,
+    pub player_state: PlayerState,
+    broadcast: BroadcastSystem,
+    pending_messages: VecDeque<String>,
+    message_buffer: VecDeque<String>,
+    last_message_time: Instant,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -99,6 +106,10 @@ impl ZappyClient {
             debug,
             last_look: None,
             player_state: PlayerState::new(),
+            broadcast: BroadcastSystem::new(),
+            pending_messages: std::collections::VecDeque::new(),
+            message_buffer: std::collections::VecDeque::new(),
+            last_message_time: std::time::Instant::now(),
         })
     }
     
@@ -195,9 +206,8 @@ impl ZappyClient {
     }
     
     pub async fn fork(&mut self) -> Result<bool, ClientError> {
-        if self.debug {
+        
             println!("Executing Fork command");
-        }
         let response = self.execute_command(Command::Fork).await?;
         Ok(response == "ok")
     }
@@ -218,11 +228,11 @@ impl ZappyClient {
         Ok(response == "ok")
     }
     
-    pub async fn set(&mut self, resource: Resource) -> Result<bool, ClientError> {
+    pub async fn set(&mut self, resource: &Resource) -> Result<bool, ClientError> {
         if self.debug {
             println!("Setting resource: {:?}", resource);
         }
-        let response = self.execute_command(Command::Set(resource)).await?;
+        let response = self.execute_command(Command::Set(resource.clone())).await?;
         Ok(response == "ok")
     }
     
@@ -274,8 +284,10 @@ impl ZappyClient {
             return Err(ClientError::InvalidResponse("Tile index must be 0-3".to_string()));
         }
 
-        let tile_str = look_result.get(index)
-            .ok_or(ClientError::InvalidResponse("Not enough tiles in look response".to_string()))?;
+        let tile_str = match look_result.get(index) {
+            Some(s) => s,
+            None => "",
+        };
 
         Ok(tile_str
             .split_whitespace()
@@ -385,13 +397,28 @@ pub async fn see_food(&mut self) -> Result<u32, ClientError> {
 }
 
 pub async fn see_priority_resource(&mut self) -> Result<bool, ClientError> {
-    const PRIORITY_RESOURCES: [&str; 4] = ["linemate", "deraumere", "sibur", "phiras"];
-    
+    let level_4_req = crate::drone::levels::get_level_requirements()
+        .into_iter()
+        .find(|r| r.level == 4)
+        .expect("Level 4 requirements should exist");
+    let inventory = self.inventory().await?;
+    let mut needs_resource = false;
+    for (resource, &count) in &level_4_req.resources {
+        if inventory.get_resource(resource) < count as i32 {
+            needs_resource = true;
+            break;
+        }
+    }
+    if !needs_resource {
+        return Ok(false);
+    }
+    let missing_resources: Vec<&String> = level_4_req.resources.iter()
+        .filter(|(resource, &count)| inventory.get_resource(resource) < count as i32)
+        .map(|(resource, _)| resource)
+        .collect();
     for i in 0..4 {
-        if self.get_look_tile(i).await?
-            .iter()
-            .any(|item| PRIORITY_RESOURCES.contains(&item.as_str()))
-        {
+        let tile = self.get_look_tile(i).await?;
+        if tile.iter().any(|item| missing_resources.iter().any(|res| res == &item)) {
             return Ok(true);
         }
     }
@@ -408,6 +435,10 @@ pub async fn has_level_requirements(&mut self) -> Result<bool, ClientError> {
         .find(|r| r.level == current_level + 1)
         .ok_or(ClientError::IncantationError("Wrong level".to_string()))?;
 
+    let current_tile: Vec<String> = self.get_look_tile(0).await?;
+
+    
+
     let inventory = self.inventory().await?;
     let has_inventory_resources = requirements.resources.iter()
         .all(|(resource, &count)| inventory.get_resource(resource) >= count.try_into().unwrap());
@@ -416,9 +447,51 @@ pub async fn has_level_requirements(&mut self) -> Result<bool, ClientError> {
         return Ok(false);
     }
 
-    let current_tile: Vec<String> = self.get_look_tile(0).await?;
+    let players_on_tile = current_tile.iter()
+        .filter(|&r| r == "player")
+        .count();
+    if players_on_tile < (requirements.required_players) as usize {
+        for idx in 1..=3 {
+        let tile = self.get_look_tile(idx).await?;
+        if tile.iter().any(|r| r == "player") {
+            match idx {
+                1 => {
+                    self.left().await?;
+                    self.forward().await?;
+                    self.right().await?;
+                }
+                2 => {
+                    self.forward().await?;
+                }
+                3 => {
+                    self.right().await?;
+                    self.forward().await?;
+                    self.left().await?;
+                }
+                _ => {}
+            }
+            self.reset_look_cache();
+            return Ok(false);
+        }
+    }
+        self.fork().await?;
+        return Ok(false);
+    }
 
-    let mut tile_resources = HashMap::new();
+    for (resource_str, count) in &requirements.resources {
+        let resource = Resource::from_string(resource_str)
+            .ok_or_else(|| ClientError::ResourceError(format!("Unknown resource: {}", resource_str)))?;
+        
+        let inv_count = inventory.get_resource(resource_str);
+        let drop_count = (*count as i32).min(inv_count);
+        
+        for _ in 0..drop_count {
+            self.set(&resource).await?;
+        }
+    }
+
+
+    let mut tile_resources = std::collections::HashMap::new();
     for resource in &current_tile {
         *tile_resources.entry(resource.to_string()).or_insert(0) += 1;
     }
@@ -430,11 +503,7 @@ pub async fn has_level_requirements(&mut self) -> Result<bool, ClientError> {
         return Ok(false);
     }
 
-    let players_on_tile = current_tile.iter()
-        .filter(|&r| r == "player")
-        .count();
-
-    Ok(players_on_tile >= requirements.required_players as usize)
+    Ok(true)
 }
 
 pub async fn get_level(&mut self) -> Result<u32, ClientError> {
@@ -442,13 +511,7 @@ pub async fn get_level(&mut self) -> Result<u32, ClientError> {
 }
 
 //position
-pub async fn handle_level_up(&mut self) -> Result<(), ClientError> {
-    if self.has_level_requirements().await? {
-        self.incantation().await?;
-        self.player_state.set_level(self.player_state.get_level() + 1);
-    }
-    Ok(())
-}
+
 pub async fn move_to_position(&mut self, target: Position) -> Result<(), ClientError> {
     let current = self.player_state.get_position();
     let delta = self.calculate_movement_delta(current, target).await?;
@@ -499,5 +562,137 @@ async fn face_direction(&mut self, dir: Direction) -> Result<(), ClientError> {
     Ok(())
 }
 
+    pub async fn should_respond_to_help(&mut self, target_level: u32) -> Result<bool, ClientError> {
+        let current_level = self.get_level().await?;
+        Ok(current_level >= target_level.saturating_sub(1))
+    }
+
+    //broadcast
+
+    pub async fn send_help_request(&mut self, target_level: u32) -> Result<(), ClientError> {
+        let pos = self.player_state.get_position();
+        let msg = format!("HELP|{}|{}|{}:{}", target_level, self.team_name, pos.x, pos.y);
+        self.broadcast(&msg).await?;
+        sleep(Self::BROADCAST_DELAY).await;
+        Ok(())
+    }
+
+    pub async fn respond_to_help(&mut self, target_level: u32) -> Result<Option<Position>, ClientError> {
+        let pos = self.player_state.get_position();
+        let msg = format!("RESP|{}|{}|{}:{}", target_level, self.team_name, pos.x, pos.y);
+        self.broadcast(&msg).await?;
+        
+        let start_time = std::time::Instant::now();
+        while start_time.elapsed() < Self::BROADCAST_DELAY {
+            if let Some(received) = self.check_messages().await? {
+                if let Some(target_pos) = self.broadcast.handle_broadcast(&received, pos).await {
+                    return Ok(Some(target_pos));
+                }
+            }
+            sleep(Duration::from_millis((1000 / self.freq).into())).await;
+        }
+        Ok(None)
+    }
+
+    const BROADCAST_DELAY: Duration = Duration::from_secs(1);
+
+    pub async fn coordinate_level_up(&mut self) -> Result<(), ClientError> {
+        let current_level = self.get_level().await?;
+        let requirements = levels::get_level_requirements()
+            .into_iter()
+            .find(|r| r.level == current_level + 1)
+            .ok_or(ClientError::IncantationError("Max level reached".to_string()))?;
+
+        let has_enough_food = self.inventory().await?.food > 5;
+
+        if has_enough_food {
+            let msg = format!("HELP|{}|{}|{}:{}", 
+                current_level + 1,
+                self.team_name,
+                self.player_state.position.x,
+                self.player_state.position.y
+            );
+            self.broadcast(&msg).await?;
+
+            let start = Instant::now();
+            let mut responders = 0;
+            
+            while start.elapsed() < ((Self::BROADCAST_DELAY / self.freq as u32) * 20) {
+                if let Some(message) = self.check_messages().await? {
+                    if message.starts_with(&format!("RESP|{}", current_level + 1)) {
+                        responders += 1;
+                        if responders >= requirements.required_players - 1 {
+                            break;
+                        }
+                    }
+                }
+                sleep(Duration::from_millis((1000 / self.freq).into())).await;
+            }
+        }
+        Ok(())
+    }
+
+    pub async fn process_broadcasts(&mut self) -> Result<(), ClientError> {
+        let messages = self.check_messages().await?;
+        if self.debug {
+            println!("Has checks message: {:?}", messages);
+        }
+        if let Some(message) = messages {
+            self.broadcast.handle_broadcast(&message, self.player_state.get_position()).await;
+        }
+        Ok(())
+    }
+    pub async fn check_messages(&mut self) -> Result<Option<String>, ClientError> {
+        while let Some(msg) = self.pending_messages.pop_front() {
+            if msg.starts_with("broadcast") {
+                    println!("[DEBUG] Received: {}", msg);
+
+                return Ok(Some(msg));
+            }
+        }
+        let mut buf = String::new();
+        match self.reader.read_line(&mut buf).await {
+            Ok(0) => Ok(None),
+            Ok(_) => {
+                let msg = buf.trim().to_string();
+                if self.debug {
+                    println!("[DEBUG] Received: {}", msg);
+                }
+                self.message_buffer.push_back(msg.clone());
+                self.last_message_time = Instant::now();
+                Ok(Some(msg))
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => Ok(None),
+            Err(e) => Err(ClientError::IoError(e)),
+        }
+    }
+
+    pub async fn does_need_help(&mut self, message: &str) -> Result<Option<(u32, Position)>, ClientError> {
+        let parts: Vec<&str> = message.splitn(2, ',').collect();
+        if parts.len() != 2 {
+            return Ok(None);
+        }
+
+        let content = parts[1].trim();
+        if !content.starts_with("HELP|") {
+            return Ok(None);
+        }
+
+        let help_parts: Vec<&str> = content.split('|').collect();
+        if help_parts.len() != 5 {
+            return Ok(None);
+        }
+
+        if help_parts[2] != self.team_name {
+            return Ok(None);
+        }
+
+        let target_level = help_parts[1].parse().unwrap_or(0);
+        let x = help_parts[3].parse().unwrap_or(0);
+        let y = help_parts[4].parse().unwrap_or(0);
+
+        Ok(Some((target_level, Position { x, y })))
+    }
 }
+
 
