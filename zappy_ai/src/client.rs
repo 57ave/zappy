@@ -435,7 +435,9 @@ pub async fn has_level_requirements(&mut self) -> Result<bool, ClientError> {
         .find(|r| r.level == current_level + 1)
         .ok_or(ClientError::IncantationError("Wrong level".to_string()))?;
 
-    println!("Checking level requirements for level {}", current_level + 1);
+    let current_tile: Vec<String> = self.get_look_tile(0).await?;
+
+    
 
     let inventory = self.inventory().await?;
     let has_inventory_resources = requirements.resources.iter()
@@ -444,6 +446,38 @@ pub async fn has_level_requirements(&mut self) -> Result<bool, ClientError> {
     if !has_inventory_resources {
         return Ok(false);
     }
+
+    let players_on_tile = current_tile.iter()
+        .filter(|&r| r == "player")
+        .count();
+    if players_on_tile < (requirements.required_players) as usize {
+        for idx in 1..=3 {
+        let tile = self.get_look_tile(idx).await?;
+        if tile.iter().any(|r| r == "player") {
+            match idx {
+                1 => {
+                    self.left().await?;
+                    self.forward().await?;
+                    self.right().await?;
+                }
+                2 => {
+                    self.forward().await?;
+                }
+                3 => {
+                    self.right().await?;
+                    self.forward().await?;
+                    self.left().await?;
+                }
+                _ => {}
+            }
+            self.reset_look_cache();
+            return Ok(false);
+        }
+    }
+        self.fork().await?;
+        return Ok(false);
+    }
+
     for (resource_str, count) in &requirements.resources {
         let resource = Resource::from_string(resource_str)
             .ok_or_else(|| ClientError::ResourceError(format!("Unknown resource: {}", resource_str)))?;
@@ -456,7 +490,6 @@ pub async fn has_level_requirements(&mut self) -> Result<bool, ClientError> {
         }
     }
 
-    let current_tile: Vec<String> = self.get_look_tile(0).await?;
 
     let mut tile_resources = std::collections::HashMap::new();
     for resource in &current_tile {
@@ -470,17 +503,7 @@ pub async fn has_level_requirements(&mut self) -> Result<bool, ClientError> {
         return Ok(false);
     }
 
-    let players_on_tile = current_tile.iter()
-        .filter(|&r| r == "player")
-        .count();
-
-    println!(
-        "Players on tile: {}, required: {}",
-        players_on_tile,
-        requirements.required_players
-    );
-
-    Ok(players_on_tile >= (requirements.required_players) as usize)
+    Ok(true)
 }
 
 pub async fn get_level(&mut self) -> Result<u32, ClientError> {
@@ -566,27 +589,12 @@ async fn face_direction(&mut self, dir: Direction) -> Result<(), ClientError> {
                     return Ok(Some(target_pos));
                 }
             }
-            sleep(Duration::from_millis(100)).await;
+            sleep(Duration::from_millis((1000 / self.freq).into())).await;
         }
         Ok(None)
     }
 
-    const BROADCAST_DELAY: Duration = Duration::from_secs(2);
-    const ACTION_DELAY: Duration = Duration::from_millis(100);
-
-    pub async fn timed_action<F, Fut, R>(&mut self, action: F) -> Result<R, ClientError>
-    where
-        F: FnOnce(&mut Self) -> Fut,
-        Fut: Future<Output = Result<R, ClientError>>,
-    {
-        let start = Instant::now();
-        let result = action(self).await;
-        let elapsed = start.elapsed();
-        if elapsed < Self::ACTION_DELAY {
-            sleep(Self::ACTION_DELAY - elapsed).await;
-        }
-        result
-    }
+    const BROADCAST_DELAY: Duration = Duration::from_secs(1);
 
     pub async fn coordinate_level_up(&mut self) -> Result<(), ClientError> {
         let current_level = self.get_level().await?;
@@ -609,7 +617,7 @@ async fn face_direction(&mut self, dir: Direction) -> Result<(), ClientError> {
             let start = Instant::now();
             let mut responders = 0;
             
-            while start.elapsed() < Self::BROADCAST_DELAY {
+            while start.elapsed() < ((Self::BROADCAST_DELAY / self.freq as u32) * 20) {
                 if let Some(message) = self.check_messages().await? {
                     if message.starts_with(&format!("RESP|{}", current_level + 1)) {
                         responders += 1;
@@ -618,7 +626,7 @@ async fn face_direction(&mut self, dir: Direction) -> Result<(), ClientError> {
                         }
                     }
                 }
-                sleep(Duration::from_millis(50)).await;
+                sleep(Duration::from_millis((1000 / self.freq).into())).await;
             }
         }
         Ok(())
@@ -635,10 +643,13 @@ async fn face_direction(&mut self, dir: Direction) -> Result<(), ClientError> {
         Ok(())
     }
     pub async fn check_messages(&mut self) -> Result<Option<String>, ClientError> {
-        if let Some(msg) = self.pending_messages.pop_front() {
-            return Ok(Some(msg));
-        }
+        while let Some(msg) = self.pending_messages.pop_front() {
+            if msg.starts_with("broadcast") {
+                    println!("[DEBUG] Received: {}", msg);
 
+                return Ok(Some(msg));
+            }
+        }
         let mut buf = String::new();
         match self.reader.read_line(&mut buf).await {
             Ok(0) => Ok(None),
