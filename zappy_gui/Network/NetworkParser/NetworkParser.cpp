@@ -177,7 +177,7 @@ void NetworkParser::parse_pfk(const std::string &message, GameState &gameState)
     for (auto &player : gameState.players) {
         if (player.getId() == id) {
             addPopMessage("Egg laying by the player " + std::to_string(id), gameState);
-            gameState.eggs.push_back(Egg(std::rand(), id, player.getX(), player.getY()));
+            gameState.eggs.push_back(Egg(gameState.eggs.back().getId() + 1, id, player.getX(), player.getY()));
         }
     }
 }
