@@ -177,6 +177,7 @@ void NetworkParser::parse_pfk(const std::string &message, GameState &gameState)
     for (auto &player : gameState.players) {
         if (player.getId() == id) {
             addPopMessage("Egg laying by the player " + std::to_string(id), gameState);
+            gameState.eggs.push_back(Egg(std::rand(), id, player.getX(), player.getY()));
         }
     }
 }
@@ -192,6 +193,7 @@ void NetworkParser::parse_enw(const std::string &message, GameState &gameState)
     for (auto &player : gameState.players) {
         if (player.getId() == gameState.eggs.back().getPlayerId()) {
             addPopMessage("Egg laying by the player " + std::to_string(gameState.eggs.back().getPlayerId()), gameState);
+            gameState.eggs.push_back(Egg(eggId, playerId, x, y));
         }
     }
     parse_pfk("pfk " + std::to_string(playerId) + "\n", gameState);
