@@ -1,14 +1,12 @@
 use tokio::net::TcpStream;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
-use std::collections::{HashMap, VecDeque};
-use std::future::Future;
+use std::collections::{VecDeque};
 use std::str;
 use std::time::{Duration, Instant};
 use crate::commands::{broadcast::BroadcastSystem, commands::{Command, Direction}};
-use crate::decision::decision_caller::handle_level_up;
 use crate::drone::inventory::{Inventory, Resource};
-use crate::drone::player_state::{self, PlayerState};
+use crate::drone::player_state::{PlayerState};
 use crate::error::ClientError;
 use tokio::time::sleep;
 use crate::drone::levels;
@@ -19,7 +17,6 @@ pub struct ZappyClient {
     reader: BufReader<OwnedReadHalf>,
     writer: BufWriter<OwnedWriteHalf>,
     pub team_name: String,
-    client_num: i32,
     map_width: usize,
     map_height: usize,
     freq: u32,
@@ -99,7 +96,6 @@ impl ZappyClient {
             reader,
             writer,
             team_name: team_name.to_string(),
-            client_num,
             map_width,
             map_height,
             freq,
@@ -250,10 +246,7 @@ impl ZappyClient {
     pub fn get_map_dimensions(&self) -> (usize, usize) {
         (self.map_width, self.map_height)
     }
-    
-    pub fn get_client_num(&self) -> i32 {
-        self.client_num
-    }
+
     
     pub fn get_freq(&self) -> u32 {
         self.freq
@@ -328,7 +321,7 @@ pub async fn move_to_food(&mut self) -> Result<bool, ClientError> {
 
     self.forward().await?;
     self.reset_look_cache();
-    Ok((false))
+    Ok(false)
 }
 
 pub async fn move_to_resource(&mut self) -> Result<bool, ClientError> {
@@ -341,7 +334,7 @@ pub async fn move_to_resource(&mut self) -> Result<bool, ClientError> {
 
     for i in 0..4 {
         let tile = self.get_look_tile(i).await?;
-        for (resource_name, resource) in PRIORITY_RESOURCES {
+        for (resource_name, _resource) in PRIORITY_RESOURCES {
             if tile.contains(&resource_name.to_string()) {
                 match i {
                     0 => {

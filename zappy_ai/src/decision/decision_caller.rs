@@ -36,7 +36,7 @@ pub async fn make_decision(client: &mut ZappyClient) -> Result<(), ClientError> 
             (Priority::Low, Action::Explore) => {
                 handle_exploration(client).await?;
             },
-            (_) => {
+            _ => {
                 println!("No action taken, waiting...");
                 sleep(Duration::from_secs(1)).await;
             }

@@ -144,7 +144,7 @@ pub struct LayEggNode {
 
 #[async_trait]
 impl DecisionNode for LayEggNode {
-    async fn evaluate(&self, client: &mut ZappyClient) -> (Priority, Action) {
+    async fn evaluate(&self, _client: &mut ZappyClient) -> (Priority, Action) {
             (Priority::High, Action::LayEgg)
     }
 }
