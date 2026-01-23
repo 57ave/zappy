@@ -117,7 +117,7 @@ pub struct JoinNode {
 #[async_trait]
 impl DecisionNode for JoinNode {
     async fn evaluate(&self, client: &mut ZappyClient) -> (Priority, Action) {
-        if let Ok(Some(message)) = client.check_messages().await {
+        if let Some(message) = client.check_messages() {
             match client.does_need_help(&message).await {
                 Ok(Some((target_level, _position))) => {
                     if client.respond_to_help(target_level).await.is_ok() {
@@ -125,8 +125,9 @@ impl DecisionNode for JoinNode {
                     }
                     return (Priority::High, Action::LayEgg);
                 }
-                Ok(None) => 
-                return (Priority::High, Action::LayEgg),
+                Ok(None) => {
+                    return (Priority::High, Action::LayEgg);
+                }
                 Err(e) => {
                     if client.debug {
                         eprintln!("Error parsing help message: {:?}", e);

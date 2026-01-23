@@ -3,6 +3,7 @@ mod commands;
 mod error;
 mod drone;
 mod decision;
+mod server_event;
 
 use clap::Parser;
 use error::ClientError;

@@ -110,14 +110,14 @@ async fn handle_exploration(client: &mut ZappyClient) -> Result<(), ClientError>
 pub async fn handle_maintain_food_supply(client: &mut ZappyClient) -> Result<(), ClientError> {
     let inventory = client.inventory().await?;
     if inventory.food < 5 {
-        client.move_to_food().await;
+        let _ = client.move_to_food().await;
         return Ok(());
     }
     Ok(())
 }
 
 pub async fn handle_join_team(client: &mut ZappyClient) -> Result<(), ClientError> {
-    if let Some(message) = client.check_messages().await? {
+    if let Some(message) = client.check_messages() {
         if let Some((target_level, position)) = client.does_need_help(&message).await? {
             if client.should_respond_to_help(target_level).await? {
                 let pos = client.player_state.get_position();
