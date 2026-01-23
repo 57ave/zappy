@@ -1,15 +1,14 @@
 use tokio::net::TcpStream;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
-use std::collections::{HashMap, VecDeque};
-use std::future::Future;
-use std::str;
+use std::collections::{VecDeque};
+use std::str::{self, FromStr};
 use std::time::{Duration, Instant};
 use crate::commands::{broadcast::BroadcastSystem, commands::{Command, Direction}};
-use crate::decision::decision_caller::handle_level_up;
 use crate::drone::inventory::{Inventory, Resource};
-use crate::drone::player_state::{self, PlayerState};
+use crate::drone::player_state::{PlayerState};
 use crate::error::ClientError;
+use crate::server_event::ServerEvent;
 use tokio::time::sleep;
 use crate::drone::levels;
 
@@ -19,7 +18,6 @@ pub struct ZappyClient {
     reader: BufReader<OwnedReadHalf>,
     writer: BufWriter<OwnedWriteHalf>,
     pub team_name: String,
-    client_num: i32,
     map_width: usize,
     map_height: usize,
     freq: u32,
@@ -28,8 +26,6 @@ pub struct ZappyClient {
     pub player_state: PlayerState,
     broadcast: BroadcastSystem,
     pending_messages: VecDeque<String>,
-    message_buffer: VecDeque<String>,
-    last_message_time: Instant,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -99,7 +95,6 @@ impl ZappyClient {
             reader,
             writer,
             team_name: team_name.to_string(),
-            client_num,
             map_width,
             map_height,
             freq,
@@ -107,9 +102,7 @@ impl ZappyClient {
             last_look: None,
             player_state: PlayerState::new(),
             broadcast: BroadcastSystem::new(),
-            pending_messages: std::collections::VecDeque::new(),
-            message_buffer: std::collections::VecDeque::new(),
-            last_message_time: std::time::Instant::now(),
+            pending_messages: VecDeque::new(),
         })
     }
     
@@ -121,23 +114,80 @@ impl ZappyClient {
         }
         Ok(response.trim().to_string())
     }
+    fn parse_event(&self, line: &str) -> Result<ServerEvent, ClientError> {
+        ServerEvent::from_str(line).map_err(|_| ClientError::InvalidResponse(line.to_string()))
+    }
+
+    async fn read_response_filtered(&mut self) -> Result<ServerEvent, ClientError> {
+        loop {
+            let response = self.read_response().await?;
+            let event = self.parse_event(&response)?;
+            match event {
+                ServerEvent::Message(_, _) => {
+                    self.pending_messages.push_back(response);
+                    continue;
+                },
+                ServerEvent::Dead => {
+                    return Err(ClientError::ConnectionError("Player is dead".to_string()));
+                },
+                _ => return Ok(event), 
+            }
+        }
+    }
     
-    pub async fn execute_command(&mut self, command: Command) -> Result<String, ClientError> {
+    pub async fn execute_command(&mut self, command: Command) -> Result<ServerEvent, ClientError> {
         let cmd_str = format!("{}\n", command.to_string());
         if self.debug {
             println!("Sent: {}", cmd_str.trim());
         }
         self.writer.write_all(cmd_str.as_bytes()).await?;
         self.writer.flush().await?;
-        self.read_response().await
+        self.read_response_filtered().await
     }
     
+    fn send_and_expect_ok(&self, response: ServerEvent) -> Result<bool, ClientError> {
+        match response {
+            ServerEvent::Ok => Ok(true),
+            ServerEvent::Ko => Ok(false),
+            _ => Err(ClientError::invalid_response("expected ko or ok response"))
+        }
+    }
+
+    /// Moves the player to an adjacent tile (index 1-3 from look).
+    /// Index 0 = current tile (no movement needed)
+    /// Index 1 = front-left diagonal
+    /// Index 2 = directly in front  
+    /// Index 3 = front-right diagonal
+    async fn move_to_adjacent_tile(&mut self, tile_index: usize) -> Result<(), ClientError> {
+        match tile_index {
+            0 => {} // Already on the tile
+            1 => {
+                self.left().await?;
+                self.forward().await?;
+                self.right().await?;
+            }
+            2 => {
+                self.forward().await?;
+            }
+            3 => {
+                self.right().await?;
+                self.forward().await?;
+                self.left().await?;
+            }
+            _ => return Err(ClientError::InvalidResponse(
+                format!("Invalid adjacent tile index: {} (must be 0-3)", tile_index)
+            )),
+        }
+        self.reset_look_cache();
+        Ok(())
+    }
+
     pub async fn forward(&mut self) -> Result<bool, ClientError> {
         if self.debug {
             println!("Executing Forward command");
         }
         let response = self.execute_command(Command::Forward).await?;
-        Ok(response == "ok")
+        self.send_and_expect_ok(response)
     }
     
     pub async fn right(&mut self) -> Result<bool, ClientError> {
@@ -145,7 +195,7 @@ impl ZappyClient {
             println!("Executing Right command");
         }
         let response = self.execute_command(Command::Right).await?;
-        Ok(response == "ok")
+        self.send_and_expect_ok(response)
     }
     
     pub async fn left(&mut self) -> Result<bool, ClientError> {
@@ -153,35 +203,62 @@ impl ZappyClient {
             println!("Executing Left command");
         }
         let response = self.execute_command(Command::Left).await?;
-        Ok(response == "ok")
+        self.send_and_expect_ok(response)
     }
     
     pub async fn look(&mut self) -> Result<Vec<String>, ClientError> {
         if self.debug {
             println!("Executing Look command");
         }
-        let response = self.execute_command(Command::Look).await?;
-        let tiles: Vec<String> = response
-            .trim_matches(|c| c == '[' || c == ']')
-            .split(',')
-            .map(|s| s.trim().to_string())
-            .collect();
+        self.writer.write_all(b"Look\n").await?;
+        self.writer.flush().await?;
         if self.debug {
-            println!("Look result: {:?}", tiles);
+            println!("Sent: Look");
         }
-        Ok(tiles)
+        
+        loop {
+            let event = self.read_response_filtered().await?;
+            match event {
+                ServerEvent::Look(tiles) => {
+                    if self.debug {
+                        println!("Look result: {:?}", tiles);
+                    }
+                    return Ok(tiles);
+                },
+                ServerEvent::Ok | ServerEvent::Ko => {
+                    if self.debug {
+                        println!("Ignoring stale ok/ko response");
+                    }
+                    continue;
+                },
+                _ => return Err(ClientError::invalid_response("Expected Look response")),
+            }
+        }
     }
     
     pub async fn inventory(&mut self) -> Result<Inventory, ClientError> {
         if self.debug {
             println!("Executing Inventory command");
         }
-        let response = self.execute_command(Command::Inventory).await?;
-        let inventory = Inventory::from_response(&response)?;
+        self.writer.write_all(b"Inventory\n").await?;
+        self.writer.flush().await?;
         if self.debug {
-            println!("Inventory result: {:?}", inventory);
+            println!("Sent: Inventory");
         }
-        Ok(inventory)
+        
+        loop {
+            let event = self.read_response_filtered().await?;
+            match event {
+                ServerEvent::Inventory(inv) => return Ok(inv),
+                ServerEvent::Ok | ServerEvent::Ko => {
+                    if self.debug {
+                        println!("Ignoring stale ok/ko response");
+                    }
+                    continue;
+                },
+                _ => return Err(ClientError::invalid_response("Expected Inventory response")),
+            }
+        }
     }
     
     pub async fn broadcast(&mut self, message: &str) -> Result<bool, ClientError> {
@@ -189,16 +266,18 @@ impl ZappyClient {
             println!("Broadcasting message: {}", message);
         }
         let response = self.execute_command(Command::Broadcast(message.to_string())).await?;
-        Ok(response == "ok")
+        self.send_and_expect_ok(response)
     }
     
     pub async fn connect_nbr(&mut self) -> Result<i32, ClientError> {
         if self.debug {
             println!("Executing ConnectNbr command");
         }
-        let response = self.execute_command(Command::ConnectNbr).await?;
-        let result = response.parse()
-            .map_err(|_| ClientError::invalid_response("Invalid connect_nbr response"))?;
+        let event = self.execute_command(Command::ConnectNbr).await?;
+        let result = match event {
+            ServerEvent::Value(val) => val,
+            _ => return Err(ClientError::invalid_response("Invalid connect_nbr response")),
+        };
         if self.debug {
             println!("ConnectNbr result: {}", result);
         }
@@ -206,10 +285,11 @@ impl ZappyClient {
     }
     
     pub async fn fork(&mut self) -> Result<bool, ClientError> {
-        
+        if self.debug {
             println!("Executing Fork command");
+        }
         let response = self.execute_command(Command::Fork).await?;
-        Ok(response == "ok")
+        self.send_and_expect_ok(response)
     }
     
     pub async fn eject(&mut self) -> Result<bool, ClientError> {
@@ -217,7 +297,7 @@ impl ZappyClient {
             println!("Executing Eject command");
         }
         let response = self.execute_command(Command::Eject).await?;
-        Ok(response == "ok")
+        self.send_and_expect_ok(response)
     }
     
     pub async fn take(&mut self, resource: Resource) -> Result<bool, ClientError> {
@@ -225,7 +305,7 @@ impl ZappyClient {
             println!("Taking resource: {:?}", resource);
         }
         let response = self.execute_command(Command::Take(resource)).await?;
-        Ok(response == "ok")
+        self.send_and_expect_ok(response)
     }
     
     pub async fn set(&mut self, resource: &Resource) -> Result<bool, ClientError> {
@@ -233,27 +313,23 @@ impl ZappyClient {
             println!("Setting resource: {:?}", resource);
         }
         let response = self.execute_command(Command::Set(resource.clone())).await?;
-        Ok(response == "ok")
+        self.send_and_expect_ok(response)
     }
     
     pub async fn incantation(&mut self) -> Result<bool, ClientError> {
         if self.debug {
             println!("Starting incantation");
         }
-        let response = self.execute_command(Command::Incantation).await?;
-        if self.debug {
-            println!("Incantation response: {}", response);
+        match self.execute_command(Command::Incantation).await? {
+            ServerEvent::ElevationUnderway => Ok(true),
+            _ => Ok(false),
         }
-        Ok(response.starts_with("Elevation underway"))
     }
     
     pub fn get_map_dimensions(&self) -> (usize, usize) {
         (self.map_width, self.map_height)
     }
-    
-    pub fn get_client_num(&self) -> i32 {
-        self.client_num
-    }
+
     
     pub fn get_freq(&self) -> u32 {
         self.freq
@@ -305,69 +381,34 @@ pub async fn move_to_food(&mut self) -> Result<bool, ClientError> {
     for idx in 1..=3 {
         let tile = self.get_look_tile(idx).await?;
         if tile.contains(&"food".to_string()) {
-            match idx {
-                1 => {
-                    self.left().await?;
-                    self.forward().await?;
-                    self.right().await?;
-                }
-                2 => {
-                    self.forward().await?;
-                }
-                3 => {
-                    self.right().await?;
-                    self.forward().await?;
-                    self.left().await?;
-                }
-                _ => unreachable!(),
-            }
-            self.reset_look_cache();
+            self.move_to_adjacent_tile(idx).await?;
             return Ok(true);
         }
     }
 
     self.forward().await?;
     self.reset_look_cache();
-    Ok((false))
+    Ok(false)
 }
 
 pub async fn move_to_resource(&mut self) -> Result<bool, ClientError> {
-    const PRIORITY_RESOURCES: [(&str, Resource); 4] = [
-        ("linemate", Resource::Linemate),
-        ("deraumere", Resource::Deraumere),
-        ("sibur", Resource::Sibur),
-        ("phiras", Resource::Phiras),
-    ];
+    const PRIORITY_RESOURCES: [&str; 4] = ["linemate", "deraumere", "sibur", "phiras"];
 
     for i in 0..4 {
         let tile = self.get_look_tile(i).await?;
-        for (resource_name, resource) in PRIORITY_RESOURCES {
+        for resource_name in PRIORITY_RESOURCES {
             if tile.contains(&resource_name.to_string()) {
-                match i {
-                    0 => {
-                        return Ok(true);
-                    },
-                    1 => {
-                        self.left().await?;
-                        self.forward().await?;
-                        self.right().await?;
-                    },
-                    2 => {
-                        self.forward().await?;
-                    },
-                    3 => {
-                        self.right().await?;
-                        self.forward().await?;
-                        self.left().await?;
-                    },
-                    _ => (),
+                if i == 0 {
+                    return Ok(true);
                 }
-                self.reset_look_cache();
+                self.move_to_adjacent_tile(i).await?;
+                return Ok(true);
             }
         }
     }
 
     self.forward().await?;
+    self.reset_look_cache();
     Ok(false)
 }
 
@@ -400,22 +441,19 @@ pub async fn see_priority_resource(&mut self) -> Result<bool, ClientError> {
     let level_4_req = crate::drone::levels::get_level_requirements()
         .into_iter()
         .find(|r| r.level == 4)
-        .expect("Level 4 requirements should exist");
+        .ok_or_else(|| ClientError::IncantationError("Level 4 requirements not found".to_string()))?;
+    
     let inventory = self.inventory().await?;
-    let mut needs_resource = false;
-    for (resource, &count) in &level_4_req.resources {
-        if inventory.get_resource(resource) < count as i32 {
-            needs_resource = true;
-            break;
-        }
-    }
-    if !needs_resource {
-        return Ok(false);
-    }
+    
     let missing_resources: Vec<&String> = level_4_req.resources.iter()
         .filter(|(resource, &count)| inventory.get_resource(resource) < count as i32)
         .map(|(resource, _)| resource)
         .collect();
+    
+    if missing_resources.is_empty() {
+        return Ok(false);
+    }
+    
     for i in 0..4 {
         let tile = self.get_look_tile(i).await?;
         if tile.iter().any(|item| missing_resources.iter().any(|res| res == &item)) {
@@ -437,11 +475,12 @@ pub async fn has_level_requirements(&mut self) -> Result<bool, ClientError> {
 
     let current_tile: Vec<String> = self.get_look_tile(0).await?;
 
-    
-
     let inventory = self.inventory().await?;
     let has_inventory_resources = requirements.resources.iter()
-        .all(|(resource, &count)| inventory.get_resource(resource) >= count.try_into().unwrap());
+        .all(|(resource, &count)| {
+            let count_i32: i32 = count.try_into().unwrap_or(i32::MAX);
+            inventory.get_resource(resource) >= count_i32
+        });
 
     if !has_inventory_resources {
         return Ok(false);
@@ -450,30 +489,16 @@ pub async fn has_level_requirements(&mut self) -> Result<bool, ClientError> {
     let players_on_tile = current_tile.iter()
         .filter(|&r| r == "player")
         .count();
+    
     if players_on_tile < (requirements.required_players) as usize {
+        // Try to find and move toward another player
         for idx in 1..=3 {
-        let tile = self.get_look_tile(idx).await?;
-        if tile.iter().any(|r| r == "player") {
-            match idx {
-                1 => {
-                    self.left().await?;
-                    self.forward().await?;
-                    self.right().await?;
-                }
-                2 => {
-                    self.forward().await?;
-                }
-                3 => {
-                    self.right().await?;
-                    self.forward().await?;
-                    self.left().await?;
-                }
-                _ => {}
+            let tile = self.get_look_tile(idx).await?;
+            if tile.iter().any(|r| r == "player") {
+                self.move_to_adjacent_tile(idx).await?;
+                return Ok(false);
             }
-            self.reset_look_cache();
-            return Ok(false);
         }
-    }
         self.fork().await?;
         return Ok(false);
     }
@@ -584,7 +609,7 @@ async fn face_direction(&mut self, dir: Direction) -> Result<(), ClientError> {
         
         let start_time = std::time::Instant::now();
         while start_time.elapsed() < Self::BROADCAST_DELAY {
-            if let Some(received) = self.check_messages().await? {
+            if let Some(received) = self.check_messages() {
                 if let Some(target_pos) = self.broadcast.handle_broadcast(&received, pos).await {
                     return Ok(Some(target_pos));
                 }
@@ -618,7 +643,7 @@ async fn face_direction(&mut self, dir: Direction) -> Result<(), ClientError> {
             let mut responders = 0;
             
             while start.elapsed() < ((Self::BROADCAST_DELAY / self.freq as u32) * 20) {
-                if let Some(message) = self.check_messages().await? {
+                if let Some(message) = self.check_messages() {
                     if message.starts_with(&format!("RESP|{}", current_level + 1)) {
                         responders += 1;
                         if responders >= requirements.required_players - 1 {
@@ -633,38 +658,20 @@ async fn face_direction(&mut self, dir: Direction) -> Result<(), ClientError> {
     }
 
     pub async fn process_broadcasts(&mut self) -> Result<(), ClientError> {
-        let messages = self.check_messages().await?;
+        let message = self.check_messages();
         if self.debug {
-            println!("Has checks message: {:?}", messages);
+            println!("Has checks message: {:?}", message);
         }
-        if let Some(message) = messages {
-            self.broadcast.handle_broadcast(&message, self.player_state.get_position()).await;
+        if let Some(msg) = message {
+            self.broadcast.handle_broadcast(&msg, self.player_state.get_position()).await;
         }
         Ok(())
     }
-    pub async fn check_messages(&mut self) -> Result<Option<String>, ClientError> {
-        while let Some(msg) = self.pending_messages.pop_front() {
-            if msg.starts_with("broadcast") {
-                    println!("[DEBUG] Received: {}", msg);
-
-                return Ok(Some(msg));
-            }
-        }
-        let mut buf = String::new();
-        match self.reader.read_line(&mut buf).await {
-            Ok(0) => Ok(None),
-            Ok(_) => {
-                let msg = buf.trim().to_string();
-                if self.debug {
-                    println!("[DEBUG] Received: {}", msg);
-                }
-                self.message_buffer.push_back(msg.clone());
-                self.last_message_time = Instant::now();
-                Ok(Some(msg))
-            }
-            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => Ok(None),
-            Err(e) => Err(ClientError::IoError(e)),
-        }
+    /// Returns the next pending broadcast message, if any.
+    /// This only reads from the internal queue (filled by `read_response_filtered`),
+    /// ensuring a single point of TCP reading.
+    pub fn check_messages(&mut self) -> Option<String> {
+        self.pending_messages.pop_front()
     }
 
     pub async fn does_need_help(&mut self, message: &str) -> Result<Option<(u32, Position)>, ClientError> {
