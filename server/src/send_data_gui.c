@@ -113,15 +113,8 @@ void send_gui_resource_changes(server_t *server)
     for (int y = 0; y < map->height; y++) {
         for (int x = 0; x < map->width; x++) {
             tile = &map->tiles[y][x];
-            printf("Tile changed at (%d, %d): [%d %d %d %d %d %d %d]\n",
-                x, y,
-                tile->resources[FOOD],
-                tile->resources[LINEMATE],
-                tile->resources[DERAUMERE],
-                tile->resources[SIBUR],
-                tile->resources[MENDIANE],
-                tile->resources[PHIRAS],
-                tile->resources[THYSTAME]);
+                
+
             send_tile_to_gui(server, x, y, tile);
             tile->changed = false;
         }
